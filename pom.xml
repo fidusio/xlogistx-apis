@@ -44,6 +44,8 @@
   </developers>
 
   <modules>
+      <module>apache-james</module>
+      <module>chatgpt</module>
   </modules>
   
   
