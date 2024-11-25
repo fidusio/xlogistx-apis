@@ -54,23 +54,41 @@ public class GPTAPI
 
         HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/audio/transcriptions", HTTPMethod.POST, true);
         speechToTextHMCI.setContentType(HTTPMediaType.MULTIPART_FORM_DATA);
-        HTTPAPIEndPoint<File, NVGenericMap> speechToText = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TRANSCRIBE, DOMAIN, "Convert speech to text", speechToTextHMCI);
+        HTTPAPIEndPoint<NamedValue<?>, NVGenericMap> speechToText = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TRANSCRIBE, DOMAIN, "Convert speech to text", speechToTextHMCI);
         speechToText.setRateController(GPT_RC);
 
         speechToText.setDataDecoder(hrd-> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
         if(log.isEnabled()) log.getLogger().info("Endpoint:" + speechToText.toCanonicalID());
-        speechToText.setDataEncoder((hmci, file) ->
+        speechToText.setDataEncoder((hmci, param) ->
         {
             NamedValue<InputStream> nvc = new NamedValue<>();
             try
             {
-                nvc.setValue(Files.newInputStream(file.toPath()))
+                InputStream is = null;
+                long length = 0;
+                if (param.getValue() instanceof InputStream)
+                {
+                    is = (InputStream) param.getValue();
+                    length = param.getProperties().getValue("length");
+                }
+                else if (param.getValue() instanceof File)
+                {
+                    is = Files.newInputStream(((File) param.getValue()).toPath());
+                    length = ((File) param.getValue()).length();
+                }
+                else if (param.getValue() instanceof String)
+                {
+                    File file = new File((String)param.getValue());
+                    is = Files.newInputStream(file.toPath());
+                    length = file.length();
+                }
+                nvc.setValue(is)
                         .setName("file")
                         .getProperties()
-                        .build(HTTPConst.CNP.FILENAME, file.getName())
-                        .build(new NVLong(HTTPConst.CNP.CONTENT_LENGTH, file.length()));
+                        .build(HTTPConst.CNP.FILENAME, param.getName())
+                        .build(new NVLong(HTTPConst.CNP.CONTENT_LENGTH, length));
                         //.build(new NVEnum(HTTPConst.CNP.MEDIA_TYPE, HTTPMediaType.lookupByExtension(file.getName())))
-                hmci.getParameters().build(nvc).build("model", "whisper-1");
+                hmci.getParameters().build(nvc).build(param.getProperties().get("model"));
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);

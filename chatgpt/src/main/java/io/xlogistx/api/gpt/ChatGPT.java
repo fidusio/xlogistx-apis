@@ -7,6 +7,7 @@ import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.shared.http.HTTPAuthScheme;
 import org.zoxweb.shared.http.HTTPAuthorization;
 import org.zoxweb.shared.util.NVGenericMap;
+import org.zoxweb.shared.util.NamedValue;
 import org.zoxweb.shared.util.ParamUtil;
 
 import java.io.File;
@@ -49,7 +50,13 @@ public class ChatGPT
                     File file = new File(params.stringValue("file"));
                     if(!file.exists())
                         throw new FileNotFoundException(file.getName());
-                    response = apiCaller.syncCall(command, file);
+
+                    NamedValue<File> param = new NamedValue<File>();
+                    param.setName(file.getName());
+                    param.setValue(file);
+                    param.getProperties().build("model",  params.stringValue("model", "whisper-1"));
+
+                    response = apiCaller.syncCall(command, param);
                     System.out.println(command + "\n" + response);
                     break;
             }
