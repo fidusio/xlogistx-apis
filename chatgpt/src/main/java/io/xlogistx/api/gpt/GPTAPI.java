@@ -27,7 +27,8 @@ public class GPTAPI
             implements GetName
     {
         COMPLETION("completion"),
-        TRANSCRIBE("transcribe")
+        TRANSCRIBE("transcribe"),
+        TEXT_TO_SPEECH("text-to-speech"),
         ;
         private final String name;
         Command(String name)
@@ -140,6 +141,65 @@ public class GPTAPI
                                     .build("url", "data:image/" + param.getValue("image-type") + ";base64,{" + imageBase64 + "}")));
 
 
+//                NVInt maxTokens = (NVInt) param.get("max-tokens");
+//
+//                if (maxTokens != null && maxTokens.getValue() > 200)
+//                    requestContent.build(new NVInt("max_tokens", maxTokens.getValue()));
+                // model o1-mini used max_completion_tokens instead of max-tokens
+                hmci.setContent(GSONUtil.toJSONDefault(requestContent));
+            }
+            catch(Exception e)
+            {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+            return hmci;
+        });
+        HTTPAPIManager.SINGLETON.register(completionEndPoint);
+    }
+
+
+    private void buildTextToSpeechEndPoint()
+    {
+        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/chat/completions", HTTPMethod.POST, true);
+        textToSpeechHMCI.setContentType(HTTPMediaType.APPLICATION_JSON);
+        //textToSpeechHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
+        HTTPAPIEndPoint<NVGenericMap, byte[]> textToSpeechEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TEXT_TO_SPEECH, DOMAIN, "Analyze Image based on prompt", textToSpeechHMCI);
+        textToSpeechEndPoint.setRateController(GPT_RC);
+
+        textToSpeechEndPoint.setDataDecoder(hrd-> hrd.getData());
+        if(log.isEnabled()) log.getLogger().info("Endpoint:" + textToSpeechEndPoint.toCanonicalID());
+        textToSpeechEndPoint.setDataEncoder((hmci, param) ->
+        {
+            try
+            {
+
+//                UByteArrayOutputStream baos = new UByteArrayOutputStream();
+//                ImageIO.write(image, "png", baos);
+
+                NVStringList modalities = param.getNV("modalities");
+                NVGenericMap audio = param.getNV("audio");
+
+
+
+
+                NVGenericMap requestContent = new NVGenericMap();
+                requestContent.build("model", param.getValue("model"));
+                requestContent.build(audio);
+                requestContent.build(modalities);
+                NVGenericMapList messages = new NVGenericMapList("messages");
+                requestContent.build(messages);
+                NVGenericMap imageAnalysis = new NVGenericMap();
+                messages.add(imageAnalysis);
+                imageAnalysis.build("role", "user");
+                NVGenericMapList content = new NVGenericMapList("content");
+                imageAnalysis.add(content);
+                content.add(new NVGenericMap().build("type", "text")
+                        .build("text", param.getValue("prompt")));
+
+
+
+
                 NVInt maxTokens = (NVInt) param.get("max-tokens");
 
                 if (maxTokens != null && maxTokens.getValue() > 200)
@@ -154,8 +214,9 @@ public class GPTAPI
             }
             return hmci;
         });
-        HTTPAPIManager.SINGLETON.register(completionEndPoint);
+        HTTPAPIManager.SINGLETON.register(textToSpeechEndPoint);
     }
+
 
 
     public NVGenericMap toPromptParams(String gptModel, String prompt, int maxTokens)
