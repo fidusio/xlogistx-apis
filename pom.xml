@@ -46,6 +46,7 @@
   <modules>
       <module>apache-james</module>
       <module>chatgpt</module>
+      <module>xlog-api</module>
   </modules>
   
   
