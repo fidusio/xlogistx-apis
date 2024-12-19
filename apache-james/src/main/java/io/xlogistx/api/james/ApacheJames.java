@@ -3,12 +3,16 @@ package io.xlogistx.api.james;
 import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.util.NVGenericMap;
+import org.zoxweb.shared.util.NVStringList;
 import org.zoxweb.shared.util.ParamUtil;
+import org.zoxweb.shared.util.SUS;
 
 import java.util.Arrays;
 
 public class ApacheJames
 {
+
+
     public static void main(String ...args)
     {
          try
@@ -16,6 +20,7 @@ public class ApacheJames
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             String url = params.stringValue("url");
             AJAPI.Command command = params.enumValue("command", AJAPI.Command.values());
+            String domain = params.stringValue("domain", true);
             HTTPAPICaller apiCaller = AJAPI.SINGLETON.create(url, null);
             String response = null;
             switch (command)
@@ -26,11 +31,26 @@ public class ApacheJames
                             .build("email", params.stringValue("email"))
                             .build("password", params.stringValue("password"));
                     byte[] userResult = apiCaller.syncCall(command, userData);
-                    response = Arrays.toString(userResult);
+                    response = Arrays.toString(userResult) + " " + params.stringValue("email");
                     break;
                 case GET_USERS:
                     NVGenericMap[] getUsersResult = apiCaller.syncCall(command, null);
-                    response = GSONUtil.toJSONDefault(getUsersResult, true);
+                    if(domain != null)
+                    {
+                        NVStringList matching = new NVStringList();
+                        for(NVGenericMap user : getUsersResult)
+                        {
+                            String email = user.getValue("username");
+                            if(email.endsWith(domain))
+                            {
+                                matching.add(email);
+                            }
+                        }
+
+                        response =  GSONUtil.toJSONDefault(matching, true);
+                    }
+                    else
+                        response = GSONUtil.toJSONDefault(getUsersResult, true);
                     break;
                 case DELETE_USER:
                     byte[] deleteUserResult = apiCaller.syncCall(command, params.stringValue("email"));
@@ -48,6 +68,7 @@ public class ApacheJames
                     byte[] deleteDomainResult = apiCaller.syncCall(command, params.stringValue("domain"));
                     response = Arrays.toString(deleteDomainResult);
                     break;
+
             }
 
 
@@ -57,6 +78,8 @@ public class ApacheJames
          catch (Exception e)
          {
              e.printStackTrace();
+             System.err.println(SUS.errorMessage("\nUsage ApacheJames ...params", AJAPI.Command.values()));
+
          }
     }
 }

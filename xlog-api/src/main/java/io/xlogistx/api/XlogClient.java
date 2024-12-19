@@ -27,6 +27,7 @@ public class XlogClient {
             apiCaller.updateExecutor(TaskUtil.defaultTaskProcessor());
             apiCaller.updateScheduler( null);
             int repeat = params.intValue("repeat", 1);
+            boolean detailed = params.booleanValue("detailed", true);
 
             AtomicLong success = new AtomicLong();
             AtomicLong fail = new AtomicLong();
@@ -44,7 +45,7 @@ public class XlogClient {
                     success.incrementAndGet();
 
                     if(print)
-                        System.out.println(nvGenericMap);
+                        System.out.println(success + " " + nvGenericMap);
 
                 }
             };
@@ -53,25 +54,30 @@ public class XlogClient {
             {
                 apiCaller.setHTTPAuthorization(new HTTPAuthorizationBasic(user, password));
             }
+            //apiCaller.updateRateController(new RateController("test", "10/s");
+            Runnable toRun = null;
+            switch (command)
+            {
+                case TIMESTAMP:
+                    toRun = ()-> apiCaller.asyncCall(command, null, callback);
+                    break;
+                case PING:
+                    toRun = ()-> apiCaller.asyncCall(command, detailed, callback);
+                    break;
+            }
+
+            toRun.run();
+
             long ts = System.currentTimeMillis();
             
             for (int i = 0; i < repeat; i++)
             {
-                switch (command)
-                {
-                    case TIMESTAMP:
-                        apiCaller.asyncCall(command, null, callback);
-                        break;
-                    case PING:
-                        boolean detailed = params.booleanValue("detailed", true);
-                        apiCaller.asyncCall(command, detailed, callback);
-                        break;
-                }
+               toRun.run();
             }
 
             ts = TaskUtil.waitIfBusyThenClose(200) - ts;
             RateCounter rc = new RateCounter("OverAll");
-            rc.register(ts, OkHTTPCall.OK_HTTP_CALLS.getCounts());
+            rc.register(ts, repeat);
 
             System.out.println("OkHTTPCall stat: " + Const.TimeInMillis.toString(ts) + " to send: " + OkHTTPCall.OK_HTTP_CALLS.getCounts() + " failed: " + fail+
                     " rate: " +  OkHTTPCall.OK_HTTP_CALLS.rate(Const.TimeInMillis.SECOND.MILLIS) + " per/second" + " average call duration: " + OkHTTPCall.OK_HTTP_CALLS.average() + " millis");

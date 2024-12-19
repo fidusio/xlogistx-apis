@@ -53,8 +53,7 @@ public class GPTAPI
     private void buildSpeechToTextAPI()
     {
 
-        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/audio/transcriptions", HTTPMethod.POST, true);
-        speechToTextHMCI.setContentType(HTTPMediaType.MULTIPART_FORM_DATA);
+        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/audio/transcriptions", HTTPMethod.POST, true, HTTPMediaType.MULTIPART_FORM_DATA);
         HTTPAPIEndPoint<NamedValue<?>, NVGenericMap> speechToText = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TRANSCRIBE, DOMAIN, "Convert speech to text", speechToTextHMCI);
         speechToText.setRateController(GPT_RC);
 
@@ -102,8 +101,7 @@ public class GPTAPI
     }
     private void buildCompletionEndPoint()
     {
-        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/chat/completions", HTTPMethod.POST, true);
-        completionsPromptHMCI.setContentType(HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/chat/completions", HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
         completionsPromptHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, NVGenericMap> completionEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.COMPLETION, DOMAIN, "Analyze Image based on prompt", completionsPromptHMCI);
         completionEndPoint.setRateController(GPT_RC);
@@ -161,8 +159,7 @@ public class GPTAPI
 
     private void buildTextToSpeechEndPoint()
     {
-        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/chat/completions", HTTPMethod.POST, true);
-        textToSpeechHMCI.setContentType(HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/chat/completions", HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
         //textToSpeechHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, byte[]> textToSpeechEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TEXT_TO_SPEECH, DOMAIN, "Analyze Image based on prompt", textToSpeechHMCI);
         textToSpeechEndPoint.setRateController(GPT_RC);

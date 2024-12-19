@@ -6,10 +6,7 @@ import org.zoxweb.server.http.HTTPAPIManager;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.*;
-import org.zoxweb.shared.util.BiDataEncoder;
-import org.zoxweb.shared.util.GetName;
-import org.zoxweb.shared.util.NVGenericMap;
-import org.zoxweb.shared.util.RateController;
+import org.zoxweb.shared.util.*;
 
 /**
  * This class defines the ApacheJames api
@@ -18,25 +15,27 @@ import org.zoxweb.shared.util.RateController;
 public class AJAPI
 {
 
-    public static final RateController AJ_RC = new RateController("ApacheJames", "4/s");
+    public static final RateController AJ_RC = new RateController("ApacheJames", "10/s");
 
     public static final LogWrapper log = new LogWrapper(AJAPI.class).setEnabled(true);
     public enum Command
-        implements GetName
+        implements GetName, GetDescription
     {
-        ADD_USER("add-user"),
-        GET_USERS("get-users"),
-        DELETE_USER("delete-user"),
-        UPDATE_USER("update-user"),
-        ADD_DOMAIN("add-domain"),
-        GET_DOMAINS("get-domains"),
-        DELETE_DOMAIN("delete-domain"),
+        ADD_USER("add-user", "command=add-user url=james-url email=user@domain.com password=UserPassword!"),
+        GET_USERS("get-users", " command=get-users url=james-url [domain=domain.com]"),
+        DELETE_USER("delete-user", "command=delete-user url=james-url"),
+        UPDATE_USER("update-user", "command=update-user url=james-url email=user@domain.com password=UserPassword!"),
+        ADD_DOMAIN("add-domain", "command=add-domain url=james-url domain=domain.com"),
+        GET_DOMAINS("get-domains", "command=get-domains url=james-url"),
+        DELETE_DOMAIN("delete-domain", "command=delete-domain url=james-url domain=domain.com"),
         ;
 
         private final String name;
-        Command(String name)
+        private final String description;
+        Command(String name, String description)
         {
             this.name = name;
+            this.description = description;
         }
 
 
@@ -52,19 +51,29 @@ public class AJAPI
         public String getName() {
             return name;
         }
+
+        /**
+         * Returns the property description.
+         *
+         * @return description
+         */
+        @Override
+        public String getDescription() {
+            return description;
+        }
     }
 
     public static final AJAPI SINGLETON = new AJAPI();
 
     public static final String DOMAIN = "apache-james";
 
-    public static final BiDataEncoder<HTTPMessageConfigInterface, NVGenericMap, HTTPMessageConfigInterface> USER_ENCODER = (hmci, nvgm) ->
-    {
-        hmci.getParameters().add(nvgm.get("email"));
-        nvgm.remove("email");
-        hmci.setContent(GSONUtil.toJSONDefault(nvgm));
-        return hmci;
-    };
+//    public static final BiDataEncoder<HTTPMessageConfigInterface, NVGenericMap, HTTPMessageConfigInterface> USER_ENCODER = (hmci, nvgm) ->
+//    {
+//        hmci.getParameters().add(nvgm.get("email"));
+//        nvgm.remove("email");
+//        hmci.setContent(GSONUtil.toJSONDefault(nvgm));
+//        return hmci;
+//    };
 
     private AJAPI()
     {
@@ -82,9 +91,7 @@ public class AJAPI
         HTTPAPIManager.SINGLETON.register(getAllUsers);
 
         // add user
-        HTTPMessageConfigInterface addUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.PUT, false);
-        addUserHMCI.setContentType(HTTPMediaType.APPLICATION_JSON);
-
+        HTTPMessageConfigInterface addUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.PUT, false, HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, HTTPResponseData> addUser = HTTPAPIManager.SINGLETON.buildEndPoint(Command.ADD_USER, DOMAIN, "Add Domain", addUserHMCI);
         addUser.setRateController(AJ_RC);
         addUser.setDataEncoder((hmci, nvgm) ->
@@ -97,7 +104,7 @@ public class AJAPI
         HTTPAPIManager.SINGLETON.register(addUser);
 
         // delete user
-        HTTPMessageConfigInterface deleteUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.DELETE, false);
+        HTTPMessageConfigInterface deleteUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.DELETE, false, (String)null);
         HTTPAPIEndPoint<String, HTTPResponseData> deleteUser = HTTPAPIManager.SINGLETON.buildEndPoint(Command.DELETE_USER, DOMAIN, "Delete User", deleteUserHMCI);
         deleteUser.setDataEncoder((httpMessageConfigInterface, s) -> {httpMessageConfigInterface.getParameters().build("email", s); return httpMessageConfigInterface;});
         deleteUser.setRateController(AJ_RC);
@@ -105,8 +112,7 @@ public class AJAPI
 
 
         // update user
-        HTTPMessageConfigInterface updateUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.PUT, false);
-        addUserHMCI.setContentType(HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface updateUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.PUT, false, HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, HTTPResponseData> updateUser = HTTPAPIManager.SINGLETON.buildEndPoint(Command.UPDATE_USER, DOMAIN, "Update User", updateUserHMCI);
         updateUser.setDataEncoder((httpMessageConfigInterface, nvgm) ->
         {
@@ -115,6 +121,7 @@ public class AJAPI
             httpMessageConfigInterface.setContent(GSONUtil.toJSONDefault(nvgm));
             return httpMessageConfigInterface;
         });
+//        updateUser.setDataEncoder(USER_ENCODER);
         updateUser.setRateController(AJ_RC);
         HTTPAPIManager.SINGLETON.register(updateUser);
 
@@ -130,14 +137,14 @@ public class AJAPI
         HTTPAPIManager.SINGLETON.register(getAllDomains);
 
         // add domain
-        HTTPMessageConfigInterface addDomainHMCI = HTTPMessageConfig.createAndInit(null, "domains/{domain}", HTTPMethod.PUT, false);
+        HTTPMessageConfigInterface addDomainHMCI = HTTPMessageConfig.createAndInit(null, "domains/{domain}", HTTPMethod.PUT, false, (String)null);
         HTTPAPIEndPoint<String, HTTPResponseData> addDomain = HTTPAPIManager.SINGLETON.buildEndPoint(Command.ADD_DOMAIN, DOMAIN, "Add Domain", addDomainHMCI);
         addDomain.setDataEncoder((httpMessageConfigInterface, s) -> {httpMessageConfigInterface.getParameters().build("domain", s); return httpMessageConfigInterface;});
         addDomain.setRateController(AJ_RC);
         HTTPAPIManager.SINGLETON.register(addDomain);
 
         // delete domain
-        HTTPMessageConfigInterface deleteDomainHMCI = HTTPMessageConfig.createAndInit(null, "domains/{domain}", HTTPMethod.DELETE, false);
+        HTTPMessageConfigInterface deleteDomainHMCI = HTTPMessageConfig.createAndInit(null, "domains/{domain}", HTTPMethod.DELETE, false, (String) null);
         HTTPAPIEndPoint<String, HTTPResponseData> deleteDomain = HTTPAPIManager.SINGLETON.buildEndPoint(Command.DELETE_DOMAIN, DOMAIN, "Delete Domain", deleteDomainHMCI);
         deleteDomain.setDataEncoder((httpMessageConfigInterface, s) -> {httpMessageConfigInterface.getParameters().build("domain", s); return httpMessageConfigInterface;});
         deleteDomain.setRateController(AJ_RC);
