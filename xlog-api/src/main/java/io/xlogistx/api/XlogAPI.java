@@ -15,16 +15,24 @@ public class XlogAPI
     //private static final RateController RC_TEST = new RateController("test-rc", "10/s");
 
     public enum Command
-        implements GetNameValue<String>
+        implements GetNameValue<String>, GetDescription
     {
-        TIMESTAMP("timestamp", "timestamp"),
-        PING("ping", "ping/{detailed}"),
+        LOGIN("login", "subject/login/{appID}", "Login to the API"),
+        PING("ping", "ping/{detailed}", "Ping the AP"),
+        TIMESTAMP("timestamp", "timestamp", "Get the timestamp of the API"),
         ;
         private final String name;
         private final String value;
-        Command(String name, String uri){this.name = name; this.value = uri;}
+        private final String description;
+        Command(String name, String uri, String description)
+        {
+            this.name = name;
+            this.value = uri;
+            this.description = description;
+        }
         public String getName(){return name;}
         public String getValue(){return value;}
+        public String getDescription(){return description;}
     }
 
     public static final String DOMAIN = "xlog-api";
@@ -33,6 +41,7 @@ public class XlogAPI
     {
         buildPingAPI();
         buildTimestampAPI();
+        buildLoginAPI();
     }
 
     private void buildPingAPI()
@@ -67,6 +76,19 @@ public class XlogAPI
         if(log.isEnabled()) log.getLogger().info("Endpoint:" + timestampAPI.toCanonicalID());
         HTTPAPIManager.SINGLETON.register(timestampAPI);
     }
+
+    private void buildLoginAPI()
+    {
+        HTTPMessageConfigInterface loginHMCI = HTTPMessageConfig.createAndInit(null, Command.LOGIN.getValue(), HTTPMethod.GET, false, (String)null);
+        loginHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
+        HTTPAPIEndPoint<NamedValue<?>, NVGenericMap> loginAPI = HTTPAPIManager.SINGLETON.buildEndPoint(Command.LOGIN, DOMAIN, Command.LOGIN.getDescription(), loginHMCI);
+//        timestampAPI.setRateController(RC_TEST);
+        loginAPI.setDataDecoder(hrd-> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
+        if(log.isEnabled()) log.getLogger().info("Endpoint:" + loginAPI.toCanonicalID());
+        HTTPAPIManager.SINGLETON.register(loginAPI);
+    }
+
+
 
     public HTTPAPICaller create(String url, HTTPAuthorization authorization)
     {

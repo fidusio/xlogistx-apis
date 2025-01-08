@@ -9,6 +9,7 @@ import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.*;
 import org.zoxweb.shared.util.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -20,6 +21,7 @@ public class GPTAPI
     public static final GPTAPI SINGLETON = new GPTAPI();
     public static final RateController GPT_RC = new RateController("GPT-RC", "100/m");
     public static final String DOMAIN = "gpt-api";
+    public static final String TRANSCRIBE_MODEL = "whisper-1";
 
     public static final String GTP_URL = "https://api.openai.com";
 
@@ -69,7 +71,7 @@ public class GPTAPI
                 if (param.getValue() instanceof InputStream)
                 {
                     is = (InputStream) param.getValue();
-                    length = param.getProperties().getValue("length");
+                    length = is instanceof ByteArrayInputStream ? ((ByteArrayInputStream)is).available() : param.getProperties().getValue("length");
                 }
                 else if (param.getValue() instanceof File)
                 {
@@ -88,7 +90,8 @@ public class GPTAPI
                         .build(HTTPConst.CNP.FILENAME, param.getName())
                         .build(new NVLong(HTTPConst.CNP.CONTENT_LENGTH, length));
                         //.build(new NVEnum(HTTPConst.CNP.MEDIA_TYPE, HTTPMediaType.lookupByExtension(file.getName())))
-                hmci.getParameters().build(nvc).build(param.getProperties().get("model"));
+                String model = param.getProperties().getValue("model");
+                hmci.getParameters().build(nvc).build("model", model != null ? model : TRANSCRIBE_MODEL);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);

@@ -9,6 +9,7 @@ import org.zoxweb.shared.http.HTTPAuthorization;
 import org.zoxweb.shared.util.NVGenericMap;
 import org.zoxweb.shared.util.NamedValue;
 import org.zoxweb.shared.util.ParamUtil;
+import org.zoxweb.shared.util.RateCounter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,6 +27,8 @@ public class ChatGPT
             GPTAPI.Command command = params.enumValue("command", GPTAPI.Command.values());
             HTTPAPICaller apiCaller = GPTAPI.SINGLETON.create(new HTTPAuthorization(HTTPAuthScheme.BEARER, gptAPIKey));
             NVGenericMap response = null;
+            RateCounter rc = new RateCounter();
+            rc.start();
             switch (command)
             {
                 case COMPLETION:
@@ -60,6 +63,8 @@ public class ChatGPT
                     System.out.println(command + "\n" + response);
                     break;
             }
+            rc.stop();
+            System.out.println("it took " + rc);
 
 
         }
