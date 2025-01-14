@@ -8,10 +8,10 @@ import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.*;
 import org.zoxweb.shared.util.*;
 
-public class XlogAPI
+public class XlogAPIBuilder
 {
-    public static final LogWrapper log = new LogWrapper(XlogAPI.class).setEnabled(true);
-    public static final XlogAPI SINGLETON = new XlogAPI();
+    public static final LogWrapper log = new LogWrapper(XlogAPIBuilder.class).setEnabled(true);
+    public static final XlogAPIBuilder SINGLETON = new XlogAPIBuilder();
     //private static final RateController RC_TEST = new RateController("test-rc", "10/s");
 
     public enum Command
@@ -37,7 +37,7 @@ public class XlogAPI
 
     public static final String DOMAIN = "xlog-api";
 
-    private XlogAPI()
+    private XlogAPIBuilder()
     {
         buildPingAPI();
         buildTimestampAPI();

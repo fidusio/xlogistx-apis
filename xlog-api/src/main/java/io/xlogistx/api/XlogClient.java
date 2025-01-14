@@ -19,8 +19,8 @@ public class XlogClient {
         {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             String url = params.stringValue("url");
-            XlogAPI.Command command = params.enumValue("command", XlogAPI.Command.values());
-            HTTPAPICaller apiCaller = XlogAPI.SINGLETON.create(url, null);
+            XlogAPIBuilder.Command command = params.enumValue("command", XlogAPIBuilder.Command.values());
+            HTTPAPICaller apiCaller = XlogAPIBuilder.SINGLETON.create(url, null);
             String user = params.stringValue("user", true);
             String password = params.stringValue("password", null);
             boolean print = params.booleanValue("print", true);

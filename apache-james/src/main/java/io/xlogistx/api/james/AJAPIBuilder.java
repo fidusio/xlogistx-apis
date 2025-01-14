@@ -1,5 +1,6 @@
 package io.xlogistx.api.james;
 
+import org.zoxweb.server.http.HTTPAPIBuilder;
 import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
 import org.zoxweb.server.http.HTTPAPIManager;
@@ -12,12 +13,13 @@ import org.zoxweb.shared.util.*;
  * This class defines the ApacheJames api
  */
 
-public class AJAPI
+public class AJAPIBuilder
+    implements HTTPAPIBuilder
 {
 
     public static final RateController AJ_RC = new RateController("ApacheJames", "10/s");
 
-    public static final LogWrapper log = new LogWrapper(AJAPI.class).setEnabled(true);
+    public static final LogWrapper log = new LogWrapper(AJAPIBuilder.class).setEnabled(true);
     public enum Command
         implements GetName, GetDescription
     {
@@ -63,7 +65,7 @@ public class AJAPI
         }
     }
 
-    public static final AJAPI SINGLETON = new AJAPI();
+    public static final AJAPIBuilder SINGLETON = new AJAPIBuilder();
 
     public static final String DOMAIN = "apache-james";
 
@@ -75,7 +77,7 @@ public class AJAPI
 //        return hmci;
 //    };
 
-    private AJAPI()
+    private AJAPIBuilder()
     {
         buildUsersEndpoints();
         buildDomainsEndpoints();
@@ -155,8 +157,10 @@ public class AJAPI
     }
 
 
-    public HTTPAPICaller create(String url, HTTPAuthorization authorization)
+    public  HTTPAPICaller createAPI(String name, String description, NVGenericMap props)
     {
-        return HTTPAPIManager.SINGLETON.createAPICaller(DOMAIN, "default", authorization).updateURL(url);
+        return HTTPAPIManager.SINGLETON.createAPICaller(DOMAIN, "default", props.getValue(Prop.AUTHZ))
+                .updateURL(props.getValue(Prop.URL));
+
     }
 }

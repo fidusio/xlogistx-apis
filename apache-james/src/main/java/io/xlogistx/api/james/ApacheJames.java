@@ -1,5 +1,6 @@
 package io.xlogistx.api.james;
 
+import org.zoxweb.server.http.HTTPAPIBuilder;
 import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.util.NVGenericMap;
@@ -19,9 +20,9 @@ public class ApacheJames
          {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             String url = params.stringValue("url");
-            AJAPI.Command command = params.enumValue("command", AJAPI.Command.values());
+            AJAPIBuilder.Command command = params.enumValue("command", AJAPIBuilder.Command.values());
             String domain = params.stringValue("domain", true);
-            HTTPAPICaller apiCaller = AJAPI.SINGLETON.create(url, null);
+            HTTPAPICaller apiCaller = AJAPIBuilder.SINGLETON.createAPI("AJ", null, HTTPAPIBuilder.Prop.toProp(url, null));
             String response = null;
             switch (command)
             {
@@ -78,7 +79,7 @@ public class ApacheJames
          catch (Exception e)
          {
              e.printStackTrace();
-             System.err.println(SUS.errorMessage("\nUsage ApacheJames ...params", AJAPI.Command.values()));
+             System.err.println(SUS.errorMessage("\nUsage ApacheJames ...params", AJAPIBuilder.Command.values()));
 
          }
     }
