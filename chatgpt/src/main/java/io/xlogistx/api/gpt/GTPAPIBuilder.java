@@ -3,6 +3,7 @@ package io.xlogistx.api.gpt;
 import org.zoxweb.server.http.HTTPAPIBuilder;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
 import org.zoxweb.server.http.HTTPAPIManager;
+import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.util.GSONUtil;
@@ -10,6 +11,7 @@ import org.zoxweb.shared.http.*;
 import org.zoxweb.shared.util.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -116,14 +118,28 @@ public class GTPAPIBuilder
         {
             try
             {
-                UByteArrayOutputStream image = param.getValue("image");
-//                UByteArrayOutputStream baos = new UByteArrayOutputStream();
-//                ImageIO.write(image, "png", baos);
+                Object imageValue = param.getValue("image");
+                byte[] imageBuffer = null;
+                int imageOffset = 0;
+                int imageLength = -1;
 
-                String imageBase64 = image != null ? SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
-                        image.getInternalBuffer(),
-                        0,
-                        image.size()) : null;
+                if (imageValue instanceof UByteArrayOutputStream)
+                {
+                    imageBuffer = ((UByteArrayOutputStream) imageValue).getInternalBuffer();
+                    imageLength = ((UByteArrayOutputStream) imageValue).size();
+                }
+                else if (imageValue instanceof InputStream)
+                {
+                    imageBuffer = new byte[ ((InputStream) imageValue).available()];
+                    imageLength = ((InputStream) imageValue).read(imageBuffer);
+                    IOUtil.close((Closeable) imageValue);
+                }
+
+
+                String imageBase64 = imageBuffer != null ? SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
+                        imageBuffer,
+                        imageOffset,
+                        imageLength) : null;
 
                 NVGenericMap requestContent = new NVGenericMap();
                 requestContent.build("model", param.getValue("model"));
@@ -222,7 +238,7 @@ public class GTPAPIBuilder
 
     public NVGenericMap toPromptParams(String gptModel, String prompt, int maxTokens)
     {
-        return toVisionParams(gptModel, prompt, maxTokens,  null, null);
+        return toVisionParams(gptModel, prompt, maxTokens,  (UByteArrayOutputStream)null, null);
     }
 
 
@@ -237,6 +253,20 @@ public class GTPAPIBuilder
 
         if(image != null)
             ret.build(new NamedValue<UByteArrayOutputStream>("image", image)).build("image-type", imageType);
+
+        return ret;
+    }
+
+    public NVGenericMap toVisionParams(String gptModel, String prompt, int maxTokens, InputStream image, String imageType)
+    {
+        NVGenericMap ret =  new NVGenericMap()
+                .build("model", gptModel)
+                .build("prompt", prompt)
+                .build(new NVInt("max-tokens", maxTokens))
+                ;
+
+        if(image != null)
+            ret.build(new NamedValue<InputStream>("image", image)).build("image-type", imageType);
 
         return ret;
     }
