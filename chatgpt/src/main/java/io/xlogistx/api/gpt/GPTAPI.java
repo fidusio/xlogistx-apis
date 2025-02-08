@@ -6,6 +6,7 @@ import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
+import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.HTTPAuthScheme;
 import org.zoxweb.shared.http.HTTPAuthorization;
 import org.zoxweb.shared.util.*;
@@ -25,7 +26,6 @@ extends HTTPAPICaller
     public String transcribe(File file) throws IOException
     {
         return transcribe(new FileInputStream(file), file.getName());
-
     }
 
     public String transcribe(InputStream is, String name) throws IOException
@@ -35,7 +35,17 @@ extends HTTPAPICaller
         param.setValue(is);
         param.getProperties().build(new NVLong("length", is.available()));
         NVGenericMap response = syncCall(GTPAPIBuilder.Command.TRANSCRIBE, param);
+        IOUtil.close(is);
         return response.getValue("text");
+    }
+
+    public NVGenericMap models() throws IOException
+    {
+        return syncCall(GTPAPIBuilder.Command.MODELS, null);
+    }
+
+    public NVGenericMap model(String model) throws IOException {
+        return syncCall(GTPAPIBuilder.Command.MODELS, model);
     }
 
     public String visionCompletion(String gptModel, String prompt, int maxTokens, InputStream is, String imageType) throws IOException {
@@ -99,6 +109,9 @@ extends HTTPAPICaller
                     if(!file.exists())
                         throw new FileNotFoundException(file.getName());
                     System.out.println(command + "\n" + apiCaller.transcribe(file));
+                    break;
+                case MODELS:
+                    System.out.println(GSONUtil.toJSONDefault(apiCaller.models(), true));
                     break;
             }
             rc.stop();

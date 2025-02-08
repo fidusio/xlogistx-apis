@@ -29,21 +29,47 @@ public class GTPAPIBuilder
     public static final String GTP_URL = "https://api.openai.com";
 
     public enum Command
-            implements GetName
+            implements GetNameValue<String>, GetDescription
     {
-        COMPLETION("completion"),
-        TRANSCRIBE("transcribe"),
-        TEXT_TO_SPEECH("text-to-speech"),
+        COMPLETION("completion", "v1/chat/completions", "Completion endpoint" ),
+        TRANSCRIBE("transcribe", "v1/audio/transcriptions", "Audio to text endpoint"),
+        TEXT_TO_SPEECH("text-to-speech", "v1/audio/speech", "Test to audio endpoint"),
+        AUDIO_TRANSLATION("audio-translation", "v1/audio/translations", "Audio translation endpoint"),
+        MODELS("models", "v1/models/{model}", "Get the supported models endpoint"),
         ;
         private final String name;
-        Command(String name)
+        private final String uri;
+        private final String description;
+        Command(String name, String uri, String description)
         {
             this.name = name;
+            this.uri = uri;
+            this.description =description;
         }
 
         public String getName()
         {
             return name;
+        }
+
+        /**
+         * Returns the property description.
+         *
+         * @return description
+         */
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        /**
+         * Returns the value.
+         *
+         * @return typed value
+         */
+        @Override
+        public String getValue() {
+            return uri;
         }
     }
 
@@ -52,13 +78,35 @@ public class GTPAPIBuilder
     {
         buildSpeechToTextAPI();
         buildCompletionEndPoint();
+        buildModelsEndpoint();
+    }
+
+    private void buildModelsEndpoint()
+    {
+        HTTPMessageConfigInterface modelsHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.MODELS.getValue(), HTTPMethod.GET, true);
+        modelsHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
+        HTTPAPIEndPoint<String, NVGenericMap> modelsAPI = HTTPAPIManager.SINGLETON.buildEndPoint(Command.MODELS, DOMAIN, "Get the supported models", modelsHMCI);
+        modelsAPI.setRateController(GPT_RC);
+
+        modelsAPI.setDataDecoder(hrd-> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
+        if(log.isEnabled()) log.getLogger().info("Endpoint:" + modelsAPI.toCanonicalID());
+        modelsAPI.setDataEncoder((hmci,  model)->{
+            if(log.isEnabled()) log.getLogger().info("Model " + model);
+
+            if(SUS.isNotEmpty(model))
+                hmci.getParameters().build("model", model);
+
+            return hmci;
+        });
+        HTTPAPIManager.SINGLETON.register(modelsAPI);
+
     }
 
 
     private void buildSpeechToTextAPI()
     {
 
-        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/audio/transcriptions", HTTPMethod.POST, true, HTTPMediaType.MULTIPART_FORM_DATA);
+        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.TRANSCRIBE.getValue(), HTTPMethod.POST, true, HTTPMediaType.MULTIPART_FORM_DATA);
         HTTPAPIEndPoint<NamedValue<?>, NVGenericMap> speechToText = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TRANSCRIBE, DOMAIN, "Convert speech to text", speechToTextHMCI);
         speechToText.setRateController(GPT_RC);
 
@@ -107,7 +155,7 @@ public class GTPAPIBuilder
     }
     private void buildCompletionEndPoint()
     {
-        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/chat/completions", HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.COMPLETION.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
         completionsPromptHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, NVGenericMap> completionEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.COMPLETION, DOMAIN, "Analyze Image based on prompt", completionsPromptHMCI);
         completionEndPoint.setRateController(GPT_RC);
@@ -179,7 +227,7 @@ public class GTPAPIBuilder
 
     private void buildTextToSpeechEndPoint()
     {
-        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(GTP_URL, "v1/chat/completions", HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.TEXT_TO_SPEECH.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
         //textToSpeechHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, byte[]> textToSpeechEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TEXT_TO_SPEECH, DOMAIN, "Analyze Image based on prompt", textToSpeechHMCI);
         textToSpeechEndPoint.setRateController(GPT_RC);
@@ -190,9 +238,6 @@ public class GTPAPIBuilder
         {
             try
             {
-
-//                UByteArrayOutputStream baos = new UByteArrayOutputStream();
-//                ImageIO.write(image, "png", baos);
 
                 NVStringList modalities = param.getNV("modalities");
                 NVGenericMap audio = param.getNV("audio");
