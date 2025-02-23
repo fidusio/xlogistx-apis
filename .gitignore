@@ -35,7 +35,7 @@ target
 
 # NetBeans
 nbproject/private/
-build/
+
 nbbuild/
 dist/
 nbdist/
@@ -46,6 +46,7 @@ nb-configuration.xml
 .project
 .classpath
 .cproject
+*.vscode
 .settings/
 bin/
 tmp/

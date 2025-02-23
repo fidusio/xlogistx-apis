@@ -2,7 +2,9 @@ package io.xlogistx.api;
 
 import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.http.OkHTTPCall;
+import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.task.TaskUtil;
+import org.zoxweb.server.util.DateUtil;
 import org.zoxweb.shared.http.HTTPAuthorizationBasic;
 import org.zoxweb.shared.task.ConsumerCallback;
 import org.zoxweb.shared.util.Const;
@@ -10,22 +12,46 @@ import org.zoxweb.shared.util.NVGenericMap;
 import org.zoxweb.shared.util.ParamUtil;
 import org.zoxweb.shared.util.RateCounter;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class XlogClient {
+public class XlogClient
+        extends HTTPAPICaller
+{
+
+    public static final LogWrapper log = new LogWrapper(XlogClient.class).setEnabled(true);
+    protected XlogClient(String name, String description)
+    {
+        super(name, description);
+    }
+
+    public long timestamp()
+            throws IOException
+    {
+        NVGenericMap nvgm = syncCall(XlogAPIBuilder.Command.TIMESTAMP, null);
+        return nvgm.getValue("current_time");
+    }
+
+
     public static void main(String ...args)
     {
         try
         {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             String url = params.stringValue("url");
+
+
             XlogAPIBuilder.Command command = params.enumValue("command", XlogAPIBuilder.Command.values());
-            HTTPAPICaller apiCaller = XlogAPIBuilder.SINGLETON.create(url, null);
+
+            log.getLogger().info("url: " + url + " command: " + command) ;
+            //HTTPAPICaller apiCaller = XlogAPIBuilder.SINGLETON.create(url, null);
+            XlogClient apiCaller = XlogAPIBuilder.SINGLETON.createAPI("XlogistX", "Xlogistx client API", null);
             String user = params.stringValue("user", true);
             String password = params.stringValue("password", null);
             boolean print = params.booleanValue("print", true);
             apiCaller.updateExecutor(TaskUtil.defaultTaskProcessor());
             apiCaller.updateScheduler( null);
+            apiCaller.updateURL(url);
             int repeat = params.intValue("repeat", 1);
             boolean detailed = params.booleanValue("detailed", true);
 
@@ -37,8 +63,9 @@ public class XlogClient {
                 public void exception(Exception e)
                 {
                     fail.incrementAndGet();
-                    if(print)
-                        e.printStackTrace();
+                    if(print) {
+                       e.printStackTrace();
+                    }
                 }
                 @Override
                 public void accept(NVGenericMap nvGenericMap) {
@@ -60,6 +87,7 @@ public class XlogClient {
             {
                 case TIMESTAMP:
                     toRun = ()-> apiCaller.asyncCall(command, null, callback);
+                    System.out.println("Simple api timestamp: " + DateUtil.DEFAULT_ZULU_MILLIS.format(apiCaller.timestamp()));
                     break;
                 case PING:
                     toRun = ()-> apiCaller.asyncCall(command, detailed, callback);

@@ -1,11 +1,13 @@
 package io.xlogistx.api;
 
-import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
 import org.zoxweb.server.http.HTTPAPIManager;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.util.GSONUtil;
-import org.zoxweb.shared.http.*;
+import org.zoxweb.shared.http.HTTPMediaType;
+import org.zoxweb.shared.http.HTTPMessageConfig;
+import org.zoxweb.shared.http.HTTPMessageConfigInterface;
+import org.zoxweb.shared.http.HTTPMethod;
 import org.zoxweb.shared.util.*;
 
 public class XlogAPIBuilder
@@ -90,9 +92,15 @@ public class XlogAPIBuilder
 
 
 
-    public HTTPAPICaller create(String url, HTTPAuthorization authorization)
+//    public HTTPAPICaller create(String url, HTTPAuthorization authorization)
+//    {
+//        return HTTPAPIManager.SINGLETON.createAPICaller(DOMAIN, "default", authorization).updateURL(url);
+//    }
+
+
+    public XlogClient createAPI(String name, String description, NVGenericMap props)
     {
-        return HTTPAPIManager.SINGLETON.createAPICaller(DOMAIN, "default", authorization).updateURL(url);
+        return HTTPAPIManager.SINGLETON.buildAPICaller( new XlogClient(name, description), DOMAIN, props);
     }
 
 }
