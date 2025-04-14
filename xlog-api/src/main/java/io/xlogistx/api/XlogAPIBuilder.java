@@ -100,7 +100,7 @@ public class XlogAPIBuilder
 
     public XlogClient createAPI(String name, String description, NVGenericMap props)
     {
-        return HTTPAPIManager.SINGLETON.buildAPICaller( new XlogClient(name, description), DOMAIN, props);
+        return HTTPAPIManager.SINGLETON.buildAPICaller(new XlogClient(name, description), DOMAIN, props);
     }
 
 }

@@ -38,6 +38,8 @@ public class XlogClient
         try
         {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
+            params.hide("password");
+            System.out.println(params);
             String url = params.stringValue("url");
 
 
@@ -50,7 +52,7 @@ public class XlogClient
             String password = params.stringValue("password", null);
             boolean print = params.booleanValue("print", true);
             apiCaller.updateExecutor(TaskUtil.defaultTaskProcessor());
-            apiCaller.updateScheduler( null);
+            //apiCaller.updateScheduler( null);
             apiCaller.updateURL(url);
             int repeat = params.intValue("repeat", 1);
             boolean detailed = params.booleanValue("detailed", true);
@@ -83,12 +85,15 @@ public class XlogClient
                 apiCaller.setHTTPAuthorization(new HTTPAuthorizationBasic(user, password));
             }
             //apiCaller.updateRateController(new RateController("test", "10/s");
+
+            System.out.println("Simple api timestamp: " + DateUtil.DEFAULT_ZULU_MILLIS.format(apiCaller.timestamp()));
+
             Runnable toRun = null;
             switch (command)
             {
                 case TIMESTAMP:
                     toRun = ()-> apiCaller.asyncCall(command, null, callback);
-                    System.out.println("Simple api timestamp: " + DateUtil.DEFAULT_ZULU_MILLIS.format(apiCaller.timestamp()));
+
                     break;
                 case PING:
                     toRun = ()-> apiCaller.asyncCall(command, detailed, callback);
@@ -97,12 +102,27 @@ public class XlogClient
 
             toRun.run();
 
+
             long ts = System.currentTimeMillis();
-            
             for (int i = 0; i < repeat; i++)
             {
                toRun.run();
             }
+
+
+//            switch (command)
+//            {
+//                case TIMESTAMP:
+//                    System.out.println("Simple api timestamp: " + DateUtil.DEFAULT_ZULU_MILLIS.format(apiCaller.timestamp()));
+//                    for (int i = 0 ; i < repeat; i++)
+//                        apiCaller.asyncCall(command, null, callback);
+//
+//                    break;
+//                case PING:
+//                    for (int i = 0 ; i < repeat; i++)
+//                        apiCaller.asyncCall(command, detailed, callback);
+//                    break;
+//            }
 
             ts = TaskUtil.waitIfBusyThenClose(200) - ts;
             RateCounter rc = new RateCounter("OverAll");
