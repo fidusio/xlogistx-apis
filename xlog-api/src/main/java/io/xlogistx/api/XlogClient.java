@@ -43,7 +43,7 @@ public class XlogClient
 
             XlogAPIBuilder.Command command = params.enumValue("command", XlogAPIBuilder.Command.values());
 
-            log.getLogger().info("url: " + url + " command: " + command) ;
+
             //HTTPAPICaller apiCaller = XlogAPIBuilder.SINGLETON.create(url, null);
             XlogClient apiCaller = XlogAPIBuilder.SINGLETON.createAPI("XlogistX", "Xlogistx client API", null);
             String user = params.stringValue("user", true);
@@ -55,6 +55,7 @@ public class XlogClient
             int repeat = params.intValue("repeat", 1);
             boolean detailed = params.booleanValue("detailed", true);
 
+            System.out.println("url: " + url + " command: " + command + " repeat: " +repeat); ;
             AtomicLong success = new AtomicLong();
             AtomicLong fail = new AtomicLong();
             ConsumerCallback<NVGenericMap> callback = new ConsumerCallback<NVGenericMap>() {
