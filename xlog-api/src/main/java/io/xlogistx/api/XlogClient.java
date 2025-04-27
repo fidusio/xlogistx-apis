@@ -5,6 +5,7 @@ import org.zoxweb.server.http.OkHTTPCall;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.task.TaskUtil;
 import org.zoxweb.server.util.DateUtil;
+import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.HTTPAuthorizationBasic;
 import org.zoxweb.shared.task.ConsumerCallback;
 import org.zoxweb.shared.util.Const;
@@ -30,6 +31,12 @@ public class XlogClient
     {
         NVGenericMap nvgm = syncCall(XlogAPIBuilder.Command.TIMESTAMP, null);
         return nvgm.getValue("current_time");
+    }
+
+    public NVGenericMap ping(boolean detailed)
+            throws IOException
+    {
+       return syncCall(XlogAPIBuilder.Command.PING, detailed);
     }
 
 
@@ -87,6 +94,7 @@ public class XlogClient
             //apiCaller.updateRateController(new RateController("test", "10/s");
 
             System.out.println("Simple api timestamp: " + DateUtil.DEFAULT_ZULU_MILLIS.format(apiCaller.timestamp()));
+            System.out.println("Simple api PING: " + GSONUtil.toJSONDefault(apiCaller.ping(detailed), true));
 
             Runnable toRun = null;
             switch (command)
