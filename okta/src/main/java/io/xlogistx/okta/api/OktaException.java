@@ -17,7 +17,7 @@ implements GetNVProperties
     private transient NVGenericMap nvgm;
     public OktaException(int status, NVGenericMap nvgm)
     {
-        SharedUtil.checkIfNulls("NVGenericMap null", nvgm);
+        SUS.checkIfNulls("NVGenericMap null", nvgm);
         this.nvgm = nvgm;
         nvgm.setName(OktaException.class.getSimpleName());
         setStatus(status);

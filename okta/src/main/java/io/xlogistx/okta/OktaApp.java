@@ -100,7 +100,7 @@ public class OktaApp {
             long ts = System.currentTimeMillis();
             switch (command) {
                 case "CREATE": {
-                    SharedUtil.checkIfNulls("CREATE Missing parameters username, password, firstName, lastName", userName, password, firstName, lastName);
+                    SUS.checkIfNulls("CREATE Missing parameters username, password, firstName, lastName", userName, password, firstName, lastName);
                     OktaUser oktaUser = new DefaultOktaUser().setOktaProfile(new DefaultOktaUserProfile());
 
                     oktaUser.getOktaProfile().setEmail(userName)
@@ -120,7 +120,7 @@ public class OktaApp {
                 }
                 break;
                 case "LOGIN": {
-                    SharedUtil.checkIfNulls("LOGIN Missing parameters username, password", userName, password);
+                    SUS.checkIfNulls("LOGIN Missing parameters username, password", userName, password);
                     NVGenericMap loginResponse = oktaAdapter.userLogin(userName, password);
                     log.info(userName + " login successfully\n" + loginResponse);
                 }
@@ -130,7 +130,7 @@ public class OktaApp {
 
                     if(rangeParam != null)
                     {
-                        SharedUtil.checkIfNulls("GenLogins Missing parameters userName postfix or password", userName, password);
+                        SUS.checkIfNulls("GenLogins Missing parameters userName postfix or password", userName, password);
                         Range<Integer> usersRange = Range.toRange(rangeParam);
                         for(int i = 0; i < count;)
                         {
@@ -160,7 +160,7 @@ public class OktaApp {
                     }
                     else
                     {
-                        SharedUtil.checkIfNulls("GenLogins Missing parameters users=user1:password1,user2:password2...", users);
+                        SUS.checkIfNulls("GenLogins Missing parameters users=user1:password1,user2:password2...", users);
                         // parser user set as user=user1:password1,user2:password2...
 
                         String[] userNames = users.split(",");
@@ -199,7 +199,7 @@ public class OktaApp {
                 break;
 
                 case "LOOKUP": {
-                    SharedUtil.checkIfNulls("LOGIN Missing parameters username, password", userName);
+                    SUS.checkIfNulls("LOGIN Missing parameters username, password", userName);
 
                     long userNameTS = System.currentTimeMillis();
                     OktaUser user = oktaAdapter.lookupUser(userName);
@@ -216,13 +216,13 @@ public class OktaApp {
                 break;
                 case "DELETE": {
 
-                    SharedUtil.checkIfNulls("LOGIN Missing parameters username", userName);
+                    SUS.checkIfNulls("LOGIN Missing parameters username", userName);
                     oktaAdapter.deleteUser(userName);
                     log.info(userName + " deleted successfully\n");
                 }
                 break;
                 case "UPDATEPASSWORD": {
-                    SharedUtil.checkIfNulls("PASSWORDUPDATE Missing parameters username, password,newPassword", userName, password, newPassword);
+                    SUS.checkIfNulls("PASSWORDUPDATE Missing parameters username, password,newPassword", userName, password, newPassword);
                     OktaUser user = oktaAdapter.userUpdatePassword(userName, password, newPassword);
                     log.info(userName + " password update successful\n" + user);
                 }
@@ -230,7 +230,7 @@ public class OktaApp {
 
 
                 case "UPDATEUSER": {
-                    SharedUtil.checkIfNulls("UPDATEUSER Missing parameters username", userName);
+                    SUS.checkIfNulls("UPDATEUSER Missing parameters username", userName);
                     OktaUser currentUser = oktaAdapter.lookupUser(userName);
                     OktaUser toUpdate = new DefaultOktaUser();
                     toUpdate.setOktaId(currentUser.getOktaId()).setOktaProfile(new DefaultOktaUserProfile());
@@ -262,7 +262,7 @@ public class OktaApp {
                 break;
 
                 case "LOOKUPUSER": {
-                    SharedUtil.checkIfNulls("LOOKUPUSER Missing parameters username, password,newPassword", userName);
+                    SUS.checkIfNulls("LOOKUPUSER Missing parameters username, password,newPassword", userName);
                     OktaUser user = oktaAdapter.lookupUser(userName);
                     log.info("User found " + user);
 
@@ -270,7 +270,7 @@ public class OktaApp {
                 break;
 
                 case "LISTGROUPUSERS": {
-                    SharedUtil.checkIfNulls("LISTGROUPUSERS Missing parameters group", group);
+                    SUS.checkIfNulls("LISTGROUPUSERS Missing parameters group", group);
 
                     boolean loop = true;
                     while (loop) {
