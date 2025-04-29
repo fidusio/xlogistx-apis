@@ -6,12 +6,13 @@ import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
-import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.HTTPAuthScheme;
 import org.zoxweb.shared.http.HTTPAuthorization;
 import org.zoxweb.shared.util.*;
 
 import java.io.*;
+import java.util.Date;
+import java.util.List;
 
 public class GPTAPI
 extends HTTPAPICaller
@@ -39,10 +40,15 @@ extends HTTPAPICaller
         return response.getValue("text");
     }
 
-    public NVGenericMap models() throws IOException
+    public List<NVGenericMap> models() throws IOException
     {
-        return syncCall(GTPAPIBuilder.Command.MODELS, null);
+
+        NVGenericMap result =  syncCall(GTPAPIBuilder.Command.MODELS, null);
+        NVGenericMapList data = result.getNV("data");
+        return data.getValue();
     }
+
+
 
     public NVGenericMap model(String model) throws IOException {
         return syncCall(GTPAPIBuilder.Command.MODELS, model);
@@ -111,10 +117,17 @@ extends HTTPAPICaller
                     System.out.println(command + "\n" + apiCaller.transcribe(file));
                     break;
                 case MODELS:
-                    System.out.println(GSONUtil.toJSONDefault(apiCaller.models(), true));
+
+                    List<NVGenericMap> models = apiCaller.models();
+                    for(NVGenericMap model : models)
+                    {
+                        int date = model.getValue("created");
+                        System.out.println(model.getValue("id") + " created: " + new Date(((long)date*1000)));
+                    }
+                    System.out.println("Models count: " + models.size());
                     break;
             }
-            rc.stop();
+            rc.stop(1);
             System.out.println("it took " + rc);
 
 
