@@ -17,33 +17,28 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class XlogClient
-        extends HTTPAPICaller
-{
+        extends HTTPAPICaller {
 
     public static final LogWrapper log = new LogWrapper(XlogClient.class).setEnabled(true);
-    protected XlogClient(String name, String description)
-    {
+
+    protected XlogClient(String name, String description) {
         super(name, description);
     }
 
     public long timestamp()
-            throws IOException
-    {
+            throws IOException {
         NVGenericMap nvgm = syncCall(XlogAPIBuilder.Command.TIMESTAMP, null);
         return nvgm.getValue("current_time");
     }
 
     public NVGenericMap ping(boolean detailed)
-            throws IOException
-    {
-       return syncCall(XlogAPIBuilder.Command.PING, detailed);
+            throws IOException {
+        return syncCall(XlogAPIBuilder.Command.PING, detailed);
     }
 
 
-    public static void main(String ...args)
-    {
-        try
-        {
+    public static void main(String... args) {
+        try {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             params.hide("password");
             System.out.println(params);
@@ -64,31 +59,31 @@ public class XlogClient
             int repeat = params.intValue("repeat", 1);
             boolean detailed = params.booleanValue("detailed", true);
 
-            System.out.println("url: " + url + " command: " + command + " repeat: " +repeat); ;
+            System.out.println("url: " + url + " command: " + command + " repeat: " + repeat);
+            ;
             AtomicLong success = new AtomicLong();
             AtomicLong fail = new AtomicLong();
             ConsumerCallback<NVGenericMap> callback = new ConsumerCallback<NVGenericMap>() {
 
 
-                public void exception(Exception e)
-                {
+                public void exception(Exception e) {
                     fail.incrementAndGet();
-                    if(print) {
-                       e.printStackTrace();
+                    if (print) {
+                        e.printStackTrace();
                     }
                 }
+
                 @Override
                 public void accept(NVGenericMap nvGenericMap) {
                     success.incrementAndGet();
 
-                    if(print)
+                    if (print)
                         System.out.println(success + " " + nvGenericMap);
 
                 }
             };
 
-            if(password != null && user != null)
-            {
+            if (password != null && user != null) {
                 apiCaller.setHTTPAuthorization(new HTTPAuthorizationBasic(user, password));
             }
             //apiCaller.updateRateController(new RateController("test", "10/s");
@@ -97,14 +92,13 @@ public class XlogClient
             System.out.println("Simple api PING: " + GSONUtil.toJSONDefault(apiCaller.ping(detailed), true));
 
             Runnable toRun = null;
-            switch (command)
-            {
+            switch (command) {
                 case TIMESTAMP:
-                    toRun = ()-> apiCaller.asyncCall(command, null, callback);
+                    toRun = () -> apiCaller.asyncCall(command, null, callback);
 
                     break;
                 case PING:
-                    toRun = ()-> apiCaller.asyncCall(command, detailed, callback);
+                    toRun = () -> apiCaller.asyncCall(command, detailed, callback);
                     break;
             }
 
@@ -112,9 +106,8 @@ public class XlogClient
 
 
             long ts = System.currentTimeMillis();
-            for (int i = 0; i < repeat; i++)
-            {
-               toRun.run();
+            for (int i = 0; i < repeat; i++) {
+                toRun.run();
             }
 
 
@@ -136,14 +129,12 @@ public class XlogClient
             RateCounter rc = new RateCounter("OverAll");
             rc.register(ts, repeat);
 
-            System.out.println("OkHTTPCall stat: " + Const.TimeInMillis.toString(ts) + " to send: " + OkHTTPCall.OK_HTTP_CALLS.getCounts() + " failed: " + fail+
-                    " rate: " +  OkHTTPCall.OK_HTTP_CALLS.rate(Const.TimeInMillis.SECOND.MILLIS) + " per/second" + " average call duration: " + OkHTTPCall.OK_HTTP_CALLS.average() + " millis");
+            System.out.println("OkHTTPCall stat: " + Const.TimeInMillis.toString(ts) + " to send: " + OkHTTPCall.OK_HTTP_CALLS.getCounts() + " failed: " + fail +
+                    " rate: " + OkHTTPCall.OK_HTTP_CALLS.rate(Const.TimeInMillis.SECOND.MILLIS) + " per/second" + " average call duration: " + OkHTTPCall.OK_HTTP_CALLS.average() + " millis");
 
-            System.out.println("App  stats: " + repeat + " it took " + Const.TimeInMillis.toString(ts)  +  " rate: " + rc.rate(Const.TimeInMillis.SECOND.MILLIS) + " per/second" + " average call duration: " + rc.average() + " millis");
+            System.out.println("App  stats: " + repeat + " it took " + Const.TimeInMillis.toString(ts) + " rate: " + rc.rate(Const.TimeInMillis.SECOND.MILLIS) + " per/second" + " average call duration: " + rc.average() + " millis");
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -13,11 +13,8 @@ import java.io.IOException;
 import java.util.UUID;
 
 
-
 public class DefaultOktaAdapter
-    implements OktaAdapter
-
-{
+        implements OktaAdapter {
 
     private String url;
     private HTTPAuthorization httpAuthentication;
@@ -25,9 +22,7 @@ public class DefaultOktaAdapter
     private final OktaAPIRate oktaAPIRate = new OktaAPIRate("Adapter");
 
 
-
-    public DefaultOktaAdapter()
-    {
+    public DefaultOktaAdapter() {
     }
 
     @Override
@@ -53,22 +48,19 @@ public class DefaultOktaAdapter
     }
 
     @Override
-    public OktaUser registerUser(OktaUser user, boolean activate, String ...groups) throws IOException {
-        HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, URIs.USERS.getValue() +"?activate=" + activate, HTTPMethod.POST);
+    public OktaUser registerUser(OktaUser user, boolean activate, String... groups) throws IOException {
+        HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, URIs.USERS.getValue() + "?activate=" + activate, HTTPMethod.POST);
         hmci.setAuthorization(getHTTPAuthorization());
         hmci.setContentType("application/json");
         hmci.setAccept("application/json");
 
-        if(user.getOktaProfile().getUUID() == null)
+        if (user.getOktaProfile().getUUID() == null)
             user.getOktaProfile().setUUID(UUID.randomUUID().toString());
-        if(groups != null && groups.length > 0)
-        {
-            for(String group : groups)
-            {
+        if (groups != null && groups.length > 0) {
+            for (String group : groups) {
 
                 OktaGroup oktaGroup = OktaCache.SINGLETON.lookupGroup(group);
-                if(oktaGroup == null)
-                {
+                if (oktaGroup == null) {
                     listGroups();
                     oktaGroup = OktaCache.SINGLETON.lookupGroup(group);
                     if (oktaGroup == null)
@@ -110,7 +102,7 @@ public class DefaultOktaAdapter
     @Override
     public OktaUser lookupUser(String oktaIdOrUserID) throws IOException {
         HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url,
-                URIs.USERS.getValue()+"/" +oktaIdOrUserID,
+                URIs.USERS.getValue() + "/" + oktaIdOrUserID,
                 HTTPMethod.GET);
         hmci.setContentType("application/json");
         hmci.setAccept("application/json");
@@ -127,7 +119,7 @@ public class DefaultOktaAdapter
 
     public OktaAdapter deleteUser(OktaUser oktaUser) throws IOException {
 
-        if(oktaUser.getStatus() != OktaUser.OktaUserStatus.DEPROVISIONED) {
+        if (oktaUser.getStatus() != OktaUser.OktaUserStatus.DEPROVISIONED) {
             HTTPMessageConfigInterface hmciDeactivate = HTTPMessageConfig.createAndInit(getURL(),
                     SharedStringUtil.embedText(URIs.USER_DEACTIVATE.getValue(), Token.USERID.getValue(), oktaUser.getOktaId()), HTTPMethod.POST);
             hmciDeactivate.setContentType("application/json");
@@ -153,15 +145,14 @@ public class DefaultOktaAdapter
     @Override
     public OktaUser[] listGroupUsers(String group) throws IOException {
         OktaGroup oktaGroup = OktaCache.SINGLETON.lookupGroup(group);
-        if(oktaGroup == null)
-        {
+        if (oktaGroup == null) {
             listGroups();
         }
         oktaGroup = OktaCache.SINGLETON.lookupGroup(group);
         if (oktaGroup == null)
             throw new IllegalArgumentException("Group " + group + " not found");
 
-        String url = ((NVGenericMap)oktaGroup.getLinks().get("users")).getValue("href");
+        String url = ((NVGenericMap) oktaGroup.getLinks().get("users")).getValue("href");
 
 
         HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, null, HTTPMethod.GET);
@@ -225,7 +216,7 @@ public class DefaultOktaAdapter
     public OktaUser updatePassword(String oktaId, String newPassword) throws IOException {
 
 
-        HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, URIs.USERS.getValue()+"/" +oktaId, HTTPMethod.POST);
+        HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, URIs.USERS.getValue() + "/" + oktaId, HTTPMethod.POST);
         hmci.setContentType("application/json");
         hmci.setAccept("application/json");
         hmci.setAuthorization(getHTTPAuthorization());
@@ -241,7 +232,7 @@ public class DefaultOktaAdapter
     @Override
     public OktaUser updateOktaUser(OktaUser oktaUser) throws IOException {
         String oktaId = oktaUser.getOktaId() == null ? oktaUser.getOktaProfile().getUserName() : oktaUser.getOktaId();
-        HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, URIs.USERS.getValue()+"/" +oktaId, HTTPMethod.POST);
+        HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, URIs.USERS.getValue() + "/" + oktaId, HTTPMethod.POST);
         hmci.setContentType("application/json");
         hmci.setAccept("application/json");
         hmci.setAuthorization(getHTTPAuthorization());
@@ -260,50 +251,44 @@ public class DefaultOktaAdapter
         return this;
     }
 
-    private HTTPResponseData send(HTTPMessageConfigInterface hmci) throws IOException
-    {
+    private HTTPResponseData send(HTTPMessageConfigInterface hmci) throws IOException {
         HTTPResponseData ret = null;
 
 
-        if (isHttpCallingEnabled())
-        {
+        if (isHttpCallingEnabled()) {
 
             try {
                 ret = HTTPCall.send(hmci);
-                if(ret == null)
+                if (ret == null)
                     return null;
                 try {
                     oktaAPIRate.setParameters(ret);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                catch (Exception e){ e.printStackTrace();}
                 log.info(ret);
-            }
-            catch (HTTPCallException callException)
-            {
+            } catch (HTTPCallException callException) {
 
                 HTTPResponseData errHRD = callException.getResponseData();
 
-                try
-                {
+                try {
                     oktaAPIRate.setParameters(errHRD);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                catch (Exception e){e.printStackTrace();}
 
-                if (errHRD != null && errHRD.getData() != null)
-                {
+                if (errHRD != null && errHRD.getData() != null) {
                     OktaException toThrow = null;
-                    try
-                    {
+                    try {
                         NVGenericMap nvgm = GSONUtil.fromJSONDefault(errHRD.getDataAsString(), NVGenericMap.class);
 
                         toThrow = new OktaException(errHRD.getStatus(), nvgm);
 
-                    }
-                    catch(Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
 
                     }
-                    if(toThrow != null)
+                    if (toThrow != null)
                         throw toThrow;
                 }
 
@@ -318,16 +303,13 @@ public class DefaultOktaAdapter
 
     private <T> T send(HTTPMessageConfigInterface hmci, Class<T> responseType) throws IOException {
         HTTPResponseData hrd = send(hmci);
-        if (hrd != null)
-        {
+        if (hrd != null) {
             try {
                 return GSONUtil.fromJSONDefault(hrd.getDataAsString(), responseType);
-            }
-            catch(RuntimeException e)
-            {
+            } catch (RuntimeException e) {
                 e.printStackTrace();
 
-               System.out.println("****************ERROR: \n"+hrd.getDataAsString());
+                System.out.println("****************ERROR: \n" + hrd.getDataAsString());
                 throw e;
             }
         }
@@ -335,14 +317,13 @@ public class DefaultOktaAdapter
     }
 
     @Override
-    public OktaUser[] listUsers(GetNameValue<String>...queries) throws IOException {
-
+    public OktaUser[] listUsers(GetNameValue<String>... queries) throws IOException {
 
 
         HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, URIs.USERS.getValue(), HTTPMethod.GET);
         hmci.setAccept("application/json");
         hmci.setAuthorization(getHTTPAuthorization());
-        for(GetNameValue<String> gnv : queries)
+        for (GetNameValue<String> gnv : queries)
             hmci.getParameters().add(gnv);
 
         return send(hmci, DefaultOktaUser[].class);
@@ -359,7 +340,7 @@ public class DefaultOktaAdapter
 
 
         OktaGroup[] ret = send(hmci, DefaultOktaGroup[].class);
-        for(OktaGroup og : ret)
+        for (OktaGroup og : ret)
             OktaCache.SINGLETON.addGroup(og);
 
 

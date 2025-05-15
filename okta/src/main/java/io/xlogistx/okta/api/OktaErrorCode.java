@@ -8,37 +8,27 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class OktaErrorCode
-{
+public class OktaErrorCode {
 
-    private  static Map<String, OktaErrorCode> CODES;
+    private static Map<String, OktaErrorCode> CODES;
     private static final Lock LOCK = new ReentrantLock();
 
-    public static Map<String, OktaErrorCode> getErrorMap()
-    {
-        if (CODES == null)
-        {
+    public static Map<String, OktaErrorCode> getErrorMap() {
+        if (CODES == null) {
             LOCK.lock();
-            try
-            {
-                if(CODES == null)
-                {
+            try {
+                if (CODES == null) {
                     OktaErrorCode[] codes = GSONUtil.fromJSONDefault(IOUtil.inputStreamToString(OktaErrorCode.class.getClassLoader().getResourceAsStream("OktaErrorList.json"), true), OktaErrorCode[].class);
-                    if(codes != null && codes.length > 0)
-                    {
+                    if (codes != null && codes.length > 0) {
                         CODES = new LinkedHashMap<>();
-                        for(OktaErrorCode oec : codes)
+                        for (OktaErrorCode oec : codes)
                             CODES.put(oec.getCodeId(), oec);
                     }
                 }
 
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
-            }
-            finally
-            {
+            } finally {
                 LOCK.unlock();
             }
         }
@@ -46,7 +36,7 @@ public class OktaErrorCode
         return CODES;
     }
 
-    private  String codeId;
+    private String codeId;
     private int httpStatus;
     private String description;
 

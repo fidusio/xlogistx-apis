@@ -7,24 +7,23 @@ import java.util.Date;
 public interface OktaGroup {
 
 
-    enum GroupType
-    {
+    enum GroupType {
         OKTA_GROUP,
         APP_GROUP,
         BUILT_IN,
     }
 
-    public String getId();
+    String getId();
 
     Date getCreationTime();
+
     Date getLastUpdate();
+
     Date getLastMembershipUpdate();
+
     GroupType getType();
 
     OktaGroupProfile getProfile();
 
     NVGenericMap getLinks();
-
-
-
 }

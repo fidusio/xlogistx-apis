@@ -3,8 +3,7 @@ package io.xlogistx.okta.api;
 import com.google.gson.annotations.SerializedName;
 
 public class DefaultOktaUserProfile
-implements OktaUserProfile
-{
+        implements OktaUserProfile {
     private String firstName;
     private String lastName;
 
@@ -38,7 +37,6 @@ implements OktaUserProfile
     }
 
 
-
     @Override
     public String getFirstName() {
         return firstName;
@@ -63,7 +61,7 @@ implements OktaUserProfile
 
     @Override
     public String getMobilePhone() {
-        return mobilePhone ;
+        return mobilePhone;
     }
 
     @Override

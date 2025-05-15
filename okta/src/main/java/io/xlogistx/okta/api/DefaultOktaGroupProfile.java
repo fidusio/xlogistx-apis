@@ -1,8 +1,7 @@
 package io.xlogistx.okta.api;
 
 public class DefaultOktaGroupProfile
-implements OktaGroupProfile
-{
+        implements OktaGroupProfile {
     private String name;
     private String description;
 

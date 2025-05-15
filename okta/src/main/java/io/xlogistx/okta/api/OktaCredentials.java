@@ -6,40 +6,35 @@ import org.zoxweb.shared.crypto.CryptoConst;
 import org.zoxweb.shared.util.NVGenericMap;
 import org.zoxweb.shared.util.NVInt;
 
-public class OktaCredentials
-{
+public class OktaCredentials {
 
     private NVGenericMap password = null;
     @SerializedName("recovery_question")
     private NVGenericMap recoveryQuestion = null;
 
 
-    public synchronized NVGenericMap getPassword(){
-        if(password == null)
+    public synchronized NVGenericMap getPassword() {
+        if (password == null)
             password = new NVGenericMap();
-        return  password;
+        return password;
     }
 
-    public String getPlainPassword()
-    {
+    public String getPlainPassword() {
         return getPassword().getValue("value");
     }
 
-    public OktaCredentials setPlainPassword(String passwd)
-    {
+    public OktaCredentials setPlainPassword(String passwd) {
         getPassword().add("value", passwd);
         return this;
     }
 
-    public synchronized NVGenericMap getRecoveryQuestion()
-    {
-        if(recoveryQuestion == null)
+    public synchronized NVGenericMap getRecoveryQuestion() {
+        if (recoveryQuestion == null)
             recoveryQuestion = new NVGenericMap();
         return recoveryQuestion;
     }
 
-    public synchronized OktaCredentials setBCrypt(String fullBCryptHash)
-    {
+    public synchronized OktaCredentials setBCrypt(String fullBCryptHash) {
         BCryptHash bh = new BCryptHash(fullBCryptHash);
         NVGenericMap hash = getHash();
         hash.add("algorithm", CryptoConst.HASHType.BCRYPT.name());
@@ -50,9 +45,8 @@ public class OktaCredentials
         return this;
     }
 
-    public synchronized NVGenericMap getHash()
-    {
-        if(getPassword().get("hash") == null)
+    public synchronized NVGenericMap getHash() {
+        if (getPassword().get("hash") == null)
             getPassword().add(new NVGenericMap("hash"));
         return (NVGenericMap) getPassword().get("hash");
     }

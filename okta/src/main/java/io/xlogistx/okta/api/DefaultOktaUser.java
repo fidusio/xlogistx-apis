@@ -8,24 +8,21 @@ import java.util.Set;
 
 
 public class DefaultOktaUser
-implements OktaUser
-{
+        implements OktaUser {
 
     private String id = null;
     private DefaultOktaUserProfile profile = null;
-    private OktaCredentials credentials = null ;
+    private OktaCredentials credentials = null;
     @SerializedName("_links")
     private NVGenericMap links = null;
 
     private Set<String> groupIds = null;
 
 
-
     private OktaUserStatus status = null;
 
 
-    public DefaultOktaUser()
-    {
+    public DefaultOktaUser() {
 
     }
 
@@ -44,11 +41,11 @@ implements OktaUser
 //    }
 
 
-
     @Override
     public synchronized String getOktaId() {
         return id;
     }
+
     @Override
     public synchronized OktaUser setOktaId(String id) {
         this.id = id;
@@ -67,8 +64,7 @@ implements OktaUser
     }
 
     @Override
-    public OktaUserStatus getStatus()
-    {
+    public OktaUserStatus getStatus() {
         return status;
     }
 
@@ -78,14 +74,9 @@ implements OktaUser
     }
 
     @Override
-    public NVGenericMap getLinks()
-    {
+    public NVGenericMap getLinks() {
         return links;
     }
-
-
-
-
 
 
     @Override
@@ -95,16 +86,14 @@ implements OktaUser
 
     @Override
     public OktaUser setCredentials(OktaCredentials credential) {
-        this.credentials =  credential;
+        this.credentials = credential;
         return this;
     }
 
     @Override
     public OktaUser addToGroupId(String groupId) {
-        if (groupIds == null)
-        {
-            synchronized (this)
-            {
+        if (groupIds == null) {
+            synchronized (this) {
                 if (groupIds == null)
                     groupIds = new HashSet<>();
             }

@@ -6,26 +6,21 @@ import org.zoxweb.shared.util.GetName;
 import org.zoxweb.shared.util.GetValue;
 
 public class OktaAPIRate
-implements GetName
-{
-
-
+        implements GetName {
 
 
     public enum LimitHeader
-        implements GetValue<String>
-    {
+            implements GetValue<String> {
         RESET("x-rate-limit-reset"),
         REMAINING("x-rate-limit-remaining"),
-        LIMIT("x-rate-limit-limit")
-
-        ;
+        LIMIT("x-rate-limit-limit");
 
         private final String headerName;
-        LimitHeader(String val)
-        {
+
+        LimitHeader(String val) {
             headerName = val;
         }
+
         @Override
         public String getValue() {
             return headerName;
@@ -40,11 +35,9 @@ implements GetName
     private final String name;
 
 
-    public OktaAPIRate(String name)
-    {
+    public OktaAPIRate(String name) {
         this.name = name;
     }
-
 
 
     public int getRemaining() {
@@ -75,7 +68,7 @@ implements GetName
     }
 
     public OktaAPIRate setResetInSeconds(long resetInSeconds) {
-        return setResetInMillis(resetInSeconds*Const.TimeInMillis.SECOND.MILLIS);
+        return setResetInMillis(resetInSeconds * Const.TimeInMillis.SECOND.MILLIS);
     }
 
 
@@ -84,8 +77,7 @@ implements GetName
         return name;
     }
 
-    public synchronized OktaAPIRate setParameters(HTTPResponse httpResponse)
-    {
+    public synchronized OktaAPIRate setParameters(HTTPResponse httpResponse) {
 
         setLimit(httpResponse.intHeaderValue(LimitHeader.LIMIT.getValue()));
         setRemaining(httpResponse.intHeaderValue(LimitHeader.REMAINING.getValue()));

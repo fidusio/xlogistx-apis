@@ -14,15 +14,14 @@ import org.zoxweb.shared.util.*;
  */
 
 public class AJAPIBuilder
-    implements HTTPAPIBuilder
-{
+        implements HTTPAPIBuilder {
 
     public static final RateController AJ_RC = new RateController("ApacheJames", "10/s");
 
     public static final LogWrapper log = new LogWrapper(AJAPIBuilder.class).setEnabled(true);
+
     public enum Command
-        implements GetName, GetDescription
-    {
+            implements GetName, GetDescription {
         ADD_USER("add-user", "command=add-user url=james-url email=user@domain.com password=UserPassword!"),
         GET_USERS("get-users", " command=get-users url=james-url [domain=domain.com]"),
         DELETE_USER("delete-user", "command=delete-user url=james-url"),
@@ -34,15 +33,14 @@ public class AJAPIBuilder
 
         private final String name;
         private final String description;
-        Command(String name, String description)
-        {
+
+        Command(String name, String description) {
             this.name = name;
             this.description = description;
         }
 
 
-        public String toString()
-        {
+        public String toString() {
             return getName();
         }
 
@@ -77,19 +75,18 @@ public class AJAPIBuilder
 //        return hmci;
 //    };
 
-    private AJAPIBuilder()
-    {
+    private AJAPIBuilder() {
         buildUsersEndpoints();
         buildDomainsEndpoints();
     }
-    private void buildUsersEndpoints()
-    {
+
+    private void buildUsersEndpoints() {
         // get user
         HTTPMessageConfigInterface usersHMCI = HTTPMessageConfig.createAndInit(null, "users", HTTPMethod.GET, false);
         HTTPAPIEndPoint<Void, NVGenericMap[]> getAllUsers = HTTPAPIManager.SINGLETON.buildEndPoint(Command.GET_USERS, DOMAIN, "Get all users", usersHMCI);
         getAllUsers.setRateController(AJ_RC);
-        getAllUsers.setDataDecoder(hrd-> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap[].class));
-        if(log.isEnabled()) log.getLogger().info("Endpoint:" + getAllUsers.toCanonicalID());
+        getAllUsers.setDataDecoder(hrd -> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap[].class));
+        if (log.isEnabled()) log.getLogger().info("Endpoint:" + getAllUsers.toCanonicalID());
         HTTPAPIManager.SINGLETON.register(getAllUsers);
 
         // add user
@@ -106,9 +103,12 @@ public class AJAPIBuilder
         HTTPAPIManager.SINGLETON.register(addUser);
 
         // delete user
-        HTTPMessageConfigInterface deleteUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.DELETE, false, (String)null);
+        HTTPMessageConfigInterface deleteUserHMCI = HTTPMessageConfig.createAndInit(null, "users/{email}", HTTPMethod.DELETE, false, (String) null);
         HTTPAPIEndPoint<String, HTTPResponseData> deleteUser = HTTPAPIManager.SINGLETON.buildEndPoint(Command.DELETE_USER, DOMAIN, "Delete User", deleteUserHMCI);
-        deleteUser.setDataEncoder((httpMessageConfigInterface, s) -> {httpMessageConfigInterface.getParameters().build("email", s); return httpMessageConfigInterface;});
+        deleteUser.setDataEncoder((httpMessageConfigInterface, s) -> {
+            httpMessageConfigInterface.getParameters().build("email", s);
+            return httpMessageConfigInterface;
+        });
         deleteUser.setRateController(AJ_RC);
         HTTPAPIManager.SINGLETON.register(deleteUser);
 
@@ -129,8 +129,7 @@ public class AJAPIBuilder
 
     }
 
-    private void buildDomainsEndpoints()
-    {
+    private void buildDomainsEndpoints() {
         // get all domains
         HTTPMessageConfigInterface getDomainsHMCI = HTTPMessageConfig.createAndInit(null, "domains", HTTPMethod.GET, false);
         HTTPAPIEndPoint<Void, String[]> getAllDomains = HTTPAPIManager.SINGLETON.buildEndPoint(Command.GET_DOMAINS, DOMAIN, "Get all domains", getDomainsHMCI);
@@ -139,26 +138,30 @@ public class AJAPIBuilder
         HTTPAPIManager.SINGLETON.register(getAllDomains);
 
         // add domain
-        HTTPMessageConfigInterface addDomainHMCI = HTTPMessageConfig.createAndInit(null, "domains/{domain}", HTTPMethod.PUT, false, (String)null);
+        HTTPMessageConfigInterface addDomainHMCI = HTTPMessageConfig.createAndInit(null, "domains/{domain}", HTTPMethod.PUT, false, (String) null);
         HTTPAPIEndPoint<String, HTTPResponseData> addDomain = HTTPAPIManager.SINGLETON.buildEndPoint(Command.ADD_DOMAIN, DOMAIN, "Add Domain", addDomainHMCI);
-        addDomain.setDataEncoder((httpMessageConfigInterface, s) -> {httpMessageConfigInterface.getParameters().build("domain", s); return httpMessageConfigInterface;});
+        addDomain.setDataEncoder((httpMessageConfigInterface, s) -> {
+            httpMessageConfigInterface.getParameters().build("domain", s);
+            return httpMessageConfigInterface;
+        });
         addDomain.setRateController(AJ_RC);
         HTTPAPIManager.SINGLETON.register(addDomain);
 
         // delete domain
         HTTPMessageConfigInterface deleteDomainHMCI = HTTPMessageConfig.createAndInit(null, "domains/{domain}", HTTPMethod.DELETE, false, (String) null);
         HTTPAPIEndPoint<String, HTTPResponseData> deleteDomain = HTTPAPIManager.SINGLETON.buildEndPoint(Command.DELETE_DOMAIN, DOMAIN, "Delete Domain", deleteDomainHMCI);
-        deleteDomain.setDataEncoder((httpMessageConfigInterface, s) -> {httpMessageConfigInterface.getParameters().build("domain", s); return httpMessageConfigInterface;});
+        deleteDomain.setDataEncoder((httpMessageConfigInterface, s) -> {
+            httpMessageConfigInterface.getParameters().build("domain", s);
+            return httpMessageConfigInterface;
+        });
         deleteDomain.setRateController(AJ_RC);
         HTTPAPIManager.SINGLETON.register(deleteDomain);
-
 
 
     }
 
 
-    public  HTTPAPICaller createAPI(String name, String description, NVGenericMap props)
-    {
+    public HTTPAPICaller createAPI(String name, String description, NVGenericMap props) {
         return HTTPAPIManager.SINGLETON.createAPICaller(DOMAIN, "default", props.getValue(Prop.AUTHZ))
                 .updateURL(props.getValue(Prop.URL));
 

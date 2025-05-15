@@ -15,8 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 public class GPTAPI
-extends HTTPAPICaller
-{
+        extends HTTPAPICaller {
     public static final LogWrapper log = new LogWrapper(GPTAPI.class);
 
     protected GPTAPI(String name, String description) {
@@ -24,13 +23,11 @@ extends HTTPAPICaller
     }
 
 
-    public String transcribe(File file) throws IOException
-    {
+    public String transcribe(File file) throws IOException {
         return transcribe(new FileInputStream(file), file.getName());
     }
 
-    public String transcribe(InputStream is, String name) throws IOException
-    {
+    public String transcribe(InputStream is, String name) throws IOException {
         NamedValue<InputStream> param = new NamedValue<InputStream>();
         param.setName(name);
         param.setValue(is);
@@ -40,14 +37,12 @@ extends HTTPAPICaller
         return response.getValue("text");
     }
 
-    public List<NVGenericMap> models() throws IOException
-    {
+    public List<NVGenericMap> models() throws IOException {
 
-        NVGenericMap result =  syncCall(GTPAPIBuilder.Command.MODELS, null);
+        NVGenericMap result = syncCall(GTPAPIBuilder.Command.MODELS, null);
         NVGenericMapList data = result.getNV("data");
         return data.getValue();
     }
-
 
 
     public NVGenericMap model(String model) throws IOException {
@@ -58,52 +53,46 @@ extends HTTPAPICaller
         return parseCompletionResponse(syncCall(GTPAPIBuilder.Command.COMPLETION, GTPAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, is, imageType)));
     }
 
-    public String visionCompletion(String gptModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType) throws IOException
-    {
+    public String visionCompletion(String gptModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType) throws IOException {
         return parseCompletionResponse(syncCall(GTPAPIBuilder.Command.COMPLETION, GTPAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, baos, imageType)));
     }
+
     public String completion(String gptModel, String prompt, int maxTokens) throws IOException {
         return parseCompletionResponse(syncCall(GTPAPIBuilder.Command.COMPLETION, GTPAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, maxTokens)));
     }
 
 
-    private static String parseCompletionResponse(NVGenericMap response)
-    {
+    private static String parseCompletionResponse(NVGenericMap response) {
         NVGenericMapList choices = (NVGenericMapList) response.get("choices");
         if (log.isEnabled()) log.getLogger().info("" + choices);
         NVGenericMap firstChoice = choices.getValue().get(0);
         if (log.isEnabled()) log.getLogger().info("" + firstChoice);
         NVGenericMap message = (NVGenericMap) firstChoice.get("message");
         Object content = message.getValue("content");
-        return ""+content;
+        return "" + content;
     }
 
-    public static void main(String ...args)
-    {
-        try
-        {
+    public static void main(String... args) {
+        try {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             String gptAPIKey = params.stringValue("gpt-key");
 
             GTPAPIBuilder.Command command = params.enumValue("command", GTPAPIBuilder.Command.values());
-            GPTAPI apiCaller = GTPAPIBuilder.SINGLETON.createAPI("main-app","Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(HTTPAuthScheme.BEARER, gptAPIKey)));
+            GPTAPI apiCaller = GTPAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(HTTPAuthScheme.BEARER, gptAPIKey)));
             NVGenericMap response = null;
             RateCounter rc = new RateCounter();
             rc.start();
-            switch (command)
-            {
+            switch (command) {
                 case COMPLETION:
                     String prompt = params.stringValue("prompt");
                     String gptModel = params.stringValue("model");
-                    String imageUrl =  params.stringValue("image-url", true);
-                    NVGenericMap completion =null;
-                    if (imageUrl != null)
-                    {
+                    String imageUrl = params.stringValue("image-url", true);
+                    NVGenericMap completion = null;
+                    if (imageUrl != null) {
                         String imageType = ImageUtil.getImageFormat(imageUrl);
                         UByteArrayOutputStream imageBAOS = IOUtil.inputStreamToByteArray(new FileInputStream(imageUrl), true);
                         completion = GTPAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, 0, imageBAOS, imageType);
-                    }
-                    else
+                    } else
                         completion = GTPAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, 0);
 
                     response = apiCaller.syncCall(command, completion);
@@ -112,17 +101,16 @@ extends HTTPAPICaller
                     break;
                 case TRANSCRIBE:
                     File file = new File(params.stringValue("file"));
-                    if(!file.exists())
+                    if (!file.exists())
                         throw new FileNotFoundException(file.getName());
                     System.out.println(command + "\n" + apiCaller.transcribe(file));
                     break;
                 case MODELS:
 
                     List<NVGenericMap> models = apiCaller.models();
-                    for(NVGenericMap model : models)
-                    {
+                    for (NVGenericMap model : models) {
                         int date = model.getValue("created");
-                        System.out.println(model.getValue("id") + " created: " + new Date(((long)date*1000)));
+                        System.out.println(model.getValue("id") + " created: " + new Date(((long) date * 1000)));
                     }
                     System.out.println("Models count: " + models.size());
                     break;
@@ -131,9 +119,7 @@ extends HTTPAPICaller
             System.out.println("it took " + rc);
 
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

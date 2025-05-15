@@ -20,8 +20,8 @@ import static io.xlogistx.okta.api.OktaCache.CacheType.RATE_CONTROLLER;
 public class OktaApp {
 
     private static final Logger log = Logger.getLogger(OktaApp.class.getName());
-    private static void error(String message, Exception e)
-    {
+
+    private static void error(String message, Exception e) {
 
         System.err.println("Error: " + message);
         System.err.println("Usage: COMMAND url=https://domain.okta.com token=003XQTwiBMPlmGes7uQAE31YogTj_kYWNNfkSpBh enableHttp=true [threadCount=64]:");
@@ -34,16 +34,16 @@ public class OktaApp {
         System.err.println("\tGenUsers count=100 username={countIndex}-email@Domain.com password=UserPassword!23 firstname={countIndex}-John lastname={countIndex}-SMITH {brypt=true} groups=groupName rate=250/min");
         System.err.println("\tGenLogins username=joe@nodomain.com password=Password  count=2000 rate=2200/min range=[60,10000]");
 
-        if(e != null)
-        {
+        if (e != null) {
             e.printStackTrace();
         }
         System.exit(-1);
     }
-    public static void main(String ...args) {
+
+    public static void main(String... args) {
 
 
-        OktaAdapter oktaAdapter =  new DefaultOktaAdapter();
+        OktaAdapter oktaAdapter = new DefaultOktaAdapter();
         try {
 
 
@@ -83,11 +83,10 @@ public class OktaApp {
             String[] groups = (params.stringValue("groups", null, true) != null) ? SharedStringUtil.parseString(params.stringValue("groups", null, true), ",", true) : null;
 
 //            TaskUtil.setMaxTasksQueue(2000);
-            if(threadCount > 0)
+            if (threadCount > 0)
                 TaskUtil.setTaskProcessorThreadCount(threadCount);
 //            TaskUtil.defaultTaskScheduler();
-            OktaCache.SINGLETON.getCache().addObject(RATE_CONTROLLER, new RateController("app",ratePerUnit));
-
+            OktaCache.SINGLETON.getCache().addObject(RATE_CONTROLLER, new RateController("app", ratePerUnit));
 
 
             // create a adapter
@@ -128,27 +127,24 @@ public class OktaApp {
 
                 case "GENLOGINS": {
 
-                    if(rangeParam != null)
-                    {
+                    if (rangeParam != null) {
                         SUS.checkIfNulls("GenLogins Missing parameters userName postfix or password", userName, password);
                         Range<Integer> usersRange = Range.toRange(rangeParam);
-                        for(int i = 0; i < count;)
-                        {
-                            for (int j = usersRange.getStart(); j < usersRange.getEnd() && i < count; j++,i++)
-                            {
+                        for (int i = 0; i < count; ) {
+                            for (int j = usersRange.getStart(); j < usersRange.getEnd() && i < count; j++, i++) {
                                 int val = j;
                                 int countIndex = i;
-                                TaskUtil.defaultTaskScheduler().queue(OktaCache.SINGLETON.rateController("app"), ()->{
+                                TaskUtil.defaultTaskScheduler().queue(OktaCache.SINGLETON.rateController("app"), () -> {
                                     String userToAuthN = val + "-" + userName;
 
                                     try {
                                         oktaAdapter.userLogin(userToAuthN, password);
-                                        if(countIndex %200 == 0)
+                                        if (countIndex % 200 == 0)
                                             log.info("[" + countIndex + "]SUCCESS : " + userToAuthN + " login successful " + TaskUtil.info());
                                         OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                     } catch (Exception e) {
                                         OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.FAILED).register(0, 1);
-                                        log.info("[" + countIndex + "]FAILED : " + userToAuthN + "  OktaAPIRate: " + oktaAdapter.getCurrentAPIRate() + "\n" + e +"\n" +
+                                        log.info("[" + countIndex + "]FAILED : " + userToAuthN + "  OktaAPIRate: " + oktaAdapter.getCurrentAPIRate() + "\n" + e + "\n" +
                                                 TaskUtil.info());
                                     }
 
@@ -157,33 +153,29 @@ public class OktaApp {
                             }
                         }
 
-                    }
-                    else
-                    {
+                    } else {
                         SUS.checkIfNulls("GenLogins Missing parameters users=user1:password1,user2:password2...", users);
                         // parser user set as user=user1:password1,user2:password2...
 
                         String[] userNames = users.split(",");
                         String[] passwords = new String[userNames.length];
                         int size = 0;
-                        for(String oneUser : userNames)
-                        {
+                        for (String oneUser : userNames) {
                             String[] parsedParam = oneUser.split(":");
-                            if(parsedParam.length == 2)
-                            {
+                            if (parsedParam.length == 2) {
                                 userNames[size] = parsedParam[0];
                                 passwords[size++] = parsedParam[1];
                             }
                         }
 
-                        for(int i= 0; i<count;) {
+                        for (int i = 0; i < count; ) {
                             for (int j = 0; j < size && i < count; j++, i++) {
                                 int userIndex = j;
                                 int countIndex = i;
                                 TaskUtil.defaultTaskScheduler().queue(OktaCache.SINGLETON.rateController("app").nextWait(), () -> {
                                     try {
                                         oktaAdapter.userLogin(userNames[userIndex], passwords[userIndex]);
-        //                                    if(countIndex %1000 == 0)
+                                        //                                    if(countIndex %1000 == 0)
                                         log.info("[" + countIndex + "]SUCCESS : " + userNames[userIndex] + " login successful");
                                         OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                     } catch (Exception e) {
@@ -300,7 +292,7 @@ public class OktaApp {
                                             OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                         } catch (Exception e) {
 
-                                            log.info("************FAILED DELETE******* for ser " + SharedUtil.toCanonicalID(',',user.getOktaProfile().getUserName(), user.getStatus()) + " available threads " +
+                                            log.info("************FAILED DELETE******* for ser " + SharedUtil.toCanonicalID(',', user.getOktaProfile().getUserName(), user.getStatus()) + " available threads " +
                                                     TaskUtil.info());
                                             log.info("API RATE: " + oktaAdapter.getCurrentAPIRate());
                                             OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.FAILED).register(0, 1);
@@ -352,7 +344,7 @@ public class OktaApp {
                                     OktaUser oktafied = oktaAdapter.registerUser(oktaUser, active, groups);
                                     if (oktafied != null && val % 200 == 0)
                                         log.info("GENUSERS OktaFiedUser : " +
-                                                SharedUtil.toCanonicalID(',' ,oktafied.getOktaProfile().getUserName() ,  oktafied.getOktaId()) + "\n"  +  TaskUtil.info());
+                                                SharedUtil.toCanonicalID(',', oktafied.getOktaProfile().getUserName(), oktafied.getOktaId()) + "\n" + TaskUtil.info());
 
                                     OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                 } catch (Exception e) {
@@ -367,11 +359,11 @@ public class OktaApp {
                                     OktaUser oktafied = oktaAdapter.registerUser(oktaUser, active, groups);
                                     if (oktafied != null)
                                         log.info("GENUSERS OktaFiedUser : " +
-                                                SharedUtil.toCanonicalID(',' ,oktafied.getOktaProfile().getUserName() ,  oktafied.getOktaId()) + "\n"  +  TaskUtil.info());
+                                                SharedUtil.toCanonicalID(',', oktafied.getOktaProfile().getUserName(), oktafied.getOktaId()) + "\n" + TaskUtil.info());
                                     OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                 } catch (Exception e) {
                                     OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
-                                    log.info("************FAILED GENUSERS******* for  " + SharedUtil.toCanonicalID(',',oktaUser.getOktaProfile().getUserName()) + " available threads " +
+                                    log.info("************FAILED GENUSERS******* for  " + SharedUtil.toCanonicalID(',', oktaUser.getOktaProfile().getUserName()) + " available threads " +
                                             TaskUtil.info() + " API RATE: " + oktaAdapter.getCurrentAPIRate());
                                     e.printStackTrace();
                                 }
@@ -399,7 +391,6 @@ public class OktaApp {
             }
 
 
-
             ts = TaskUtil.waitIfBusy(50) - ts;
 
             RateCounter total = new RateCounter("total");
@@ -409,11 +400,11 @@ public class OktaApp {
             RateCounter success = OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS);
             RateCounter failed = OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.FAILED);
 
-            log.info("***["+ command + "]*** took " + Const.TimeInMillis.toString(total.getDeltas()) + " transactions " + total.getCounts()
-                     + " success: " + success.getCounts() + " failed: " + failed.getCounts()
-                     + "\n stats " + total.rate(Const.TimeInMillis.SECOND.MILLIS) + "/tps"
-                     + " " + total.rate(Const.TimeInMillis.MINUTE.MILLIS) + "/tpm " + HTTPCall.HTTP_CALLS
-                     +"\n" + TaskUtil.info()
+            log.info("***[" + command + "]*** took " + Const.TimeInMillis.toString(total.getDeltas()) + " transactions " + total.getCounts()
+                    + " success: " + success.getCounts() + " failed: " + failed.getCounts()
+                    + "\n stats " + total.rate(Const.TimeInMillis.SECOND.MILLIS) + "/tps"
+                    + " " + total.rate(Const.TimeInMillis.MINUTE.MILLIS) + "/tpm " + HTTPCall.HTTP_CALLS
+                    + "\n" + TaskUtil.info()
             );
 
 

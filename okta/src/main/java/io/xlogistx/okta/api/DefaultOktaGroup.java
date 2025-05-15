@@ -6,8 +6,7 @@ import org.zoxweb.shared.util.NVGenericMap;
 import java.util.Date;
 
 public class DefaultOktaGroup
-    implements OktaGroup
-{
+        implements OktaGroup {
     private String id;
     private Date created;
     private Date lastUpdated;
