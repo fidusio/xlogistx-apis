@@ -48,6 +48,7 @@
       <module>chatgpt</module>
       <module>xlog-api</module>
       <module>okta</module>
+      <module>payment</module>
   </modules>
   
   
