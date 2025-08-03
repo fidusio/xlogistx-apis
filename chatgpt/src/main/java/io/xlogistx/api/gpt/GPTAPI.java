@@ -27,6 +27,13 @@ public class GPTAPI
         return transcribe(new FileInputStream(file), file.getName());
     }
 
+    /**
+     * Transcribe a text
+     * @param is input stream
+     * @param name user defined name
+     * @return text of the recording
+     * @throws IOException in case of api error
+     */
     public String transcribe(InputStream is, String name) throws IOException {
         NamedValue<InputStream> param = new NamedValue<InputStream>();
         param.setName(name);
