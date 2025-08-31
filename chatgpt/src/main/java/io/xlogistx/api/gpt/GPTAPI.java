@@ -23,6 +23,7 @@ public class GPTAPI
     }
 
 
+
     public String transcribe(File file) throws IOException {
         return transcribe(new FileInputStream(file), file.getName());
     }

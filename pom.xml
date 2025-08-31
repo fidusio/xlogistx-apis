@@ -48,6 +48,7 @@
         <module>xlog-api</module>
         <module>okta</module>
         <module>payment</module>
+        <module>rapid-api</module>
     </modules>
 
 
