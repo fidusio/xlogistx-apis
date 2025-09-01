@@ -12,20 +12,21 @@ import org.zoxweb.shared.http.HTTPMethod;
 import org.zoxweb.shared.util.GetDescription;
 import org.zoxweb.shared.util.GetNameValue;
 import org.zoxweb.shared.util.NVGenericMap;
+import org.zoxweb.shared.util.RateController;
 
 public class RapidAPIBuilder
 implements HTTPAPIBuilder {
-    private static final LogWrapper log = new LogWrapper(RapidAPIBuilder.class).setEnabled(true);
+    private static final LogWrapper log = new LogWrapper(RapidAPIBuilder.class).setEnabled(false);
 
     public static final RapidAPIBuilder SINGLETON = new RapidAPIBuilder();
 
     public static final String DOMAIN = "rapid-api";
-    public static final String API_HEADER_NAME = "x-rapidapi-key";
+    public static final String API_KEY_HEADER_NAME = "x-rapidapi-key";
 
 
     public enum Command
             implements GetNameValue<String>, GetDescription {
-        VALIDATE_EMAIL("validate-email", "v1", "validate email"),
+        VALIDATE_EMAIL("validate-email", "https://email-checker.p.rapidapi.com/verify/v1", "validate email"),
         ;
         private final String name;
         private final String value;
@@ -61,7 +62,7 @@ implements HTTPAPIBuilder {
 
 
     private void buildCheckEmailAPI() {
-        HTTPMessageConfigInterface validateEmailHMCI = HTTPMessageConfig.createAndInit("https://email-checker.p.rapidapi.com/verify", Command.VALIDATE_EMAIL.getValue(), HTTPMethod.GET, false, HTTPMediaType.APPLICATION_WWW_URL_ENC);
+        HTTPMessageConfigInterface validateEmailHMCI = HTTPMessageConfig.createAndInit(Command.VALIDATE_EMAIL.getValue(), null, HTTPMethod.GET, true, HTTPMediaType.APPLICATION_WWW_URL_ENC);
         validateEmailHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         validateEmailHMCI.getHeaders().build("x-rapidapi-host", "email-checker.p.rapidapi.com");
         HTTPAPIEndPoint<GetNameValue<String>, NVGenericMap> validateEmailAPI = HTTPAPIManager.SINGLETON.buildEndPoint(Command.VALIDATE_EMAIL, DOMAIN, "Validate email address", validateEmailHMCI);
@@ -71,6 +72,7 @@ implements HTTPAPIBuilder {
           return hmci;
         });
         validateEmailAPI.setDataDecoder(hrd -> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
+        validateEmailAPI.setRateController(new RateController("email-checker-rc", "5/min"));
         if (log.isEnabled()) log.getLogger().info("Endpoint:" + validateEmailAPI.toCanonicalID());
         HTTPAPIManager.SINGLETON.register(validateEmailAPI);
     }

@@ -27,15 +27,17 @@ public class RapidAPI
         try {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             String apiKey = params.stringValue("api-key");
-            String email = params.stringValue("email");
+            String[] emails = ParamUtil.parseWithSep(",", params.stringValue("emails"));
 
-            RapidAPI rapidAPI = RapidAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(RapidAPIBuilder.API_HEADER_NAME, apiKey, true)));
+            RapidAPI rapidAPI = RapidAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(RapidAPIBuilder.API_KEY_HEADER_NAME, apiKey, true)));
 
-            NVGenericMap nvmg = rapidAPI.checkEmail( email);
-            System.out.println(GSONUtil.toJSONDefault(nvmg, true));
+            for (String email : emails) {
+                NVGenericMap nvmg = rapidAPI.checkEmail(email);
+                System.out.println(GSONUtil.toJSONDefault(nvmg, true));
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("Usage RapidAPI command=[validate-email] api-key=rapid-api-key email=acme@acme.com");
+            System.err.println("Usage RapidAPI command=[validate-email] api-key=rapid-api-key emails=acme@acme.com,mail@example.com");
         }
     }
 }
