@@ -1,4 +1,4 @@
-package io.xlogistx.api.gpt;
+package io.xlogistx.api.ai;
 
 import org.zoxweb.server.http.HTTPAPIBuilder;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
@@ -16,16 +16,16 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 
-public class GTPAPIBuilder
+public class AIAPIBuilder
         implements HTTPAPIBuilder {
 
-    public static final LogWrapper log = new LogWrapper(GTPAPIBuilder.class).setEnabled(true);
-    public static final GTPAPIBuilder SINGLETON = new GTPAPIBuilder();
+    public static final LogWrapper log = new LogWrapper(AIAPIBuilder.class).setEnabled(true);
+    public static final AIAPIBuilder SINGLETON = new AIAPIBuilder();
     public static final RateController GPT_RC = new RateController("GPT-RC", "100/m");
-    public static final String DOMAIN = "gpt-api";
+    public static final String DOMAIN = "ai-api";
     public static final String TRANSCRIBE_MODEL = "whisper-1";
 
-    public static final String GTP_URL = "https://api.openai.com";
+    public static final String AI_URL = "https://api.openai.com";
 
     public enum Command
             implements GetNameValue<String>, GetDescription {
@@ -71,14 +71,14 @@ public class GTPAPIBuilder
     }
 
 
-    private GTPAPIBuilder() {
+    private AIAPIBuilder() {
         buildSpeechToTextAPI();
         buildCompletionEndPoint();
         buildModelsEndpoint();
     }
 
     private void buildModelsEndpoint() {
-        HTTPMessageConfigInterface modelsHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.MODELS.getValue(), HTTPMethod.GET, true);
+        HTTPMessageConfigInterface modelsHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.MODELS.getValue(), HTTPMethod.GET, true);
         modelsHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<String, NVGenericMap> modelsAPI = HTTPAPIManager.SINGLETON.buildEndPoint(Command.MODELS, DOMAIN, "Get the supported models", modelsHMCI);
         modelsAPI.setRateController(GPT_RC);
@@ -100,7 +100,7 @@ public class GTPAPIBuilder
 
     private void buildSpeechToTextAPI() {
 
-        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.TRANSCRIBE.getValue(), HTTPMethod.POST, true, HTTPMediaType.MULTIPART_FORM_DATA);
+        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.TRANSCRIBE.getValue(), HTTPMethod.POST, true, HTTPMediaType.MULTIPART_FORM_DATA);
         HTTPAPIEndPoint<NamedValue<?>, NVGenericMap> speechToText = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TRANSCRIBE, DOMAIN, "Convert speech to text", speechToTextHMCI);
         speechToText.setRateController(GPT_RC);
 
@@ -143,7 +143,7 @@ public class GTPAPIBuilder
     }
 
     private void buildCompletionEndPoint() {
-        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.COMPLETION.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.COMPLETION.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
         completionsPromptHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, NVGenericMap> completionEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.COMPLETION, DOMAIN, "Analyze Image based on prompt", completionsPromptHMCI);
         completionEndPoint.setRateController(GPT_RC);
@@ -188,7 +188,9 @@ public class GTPAPIBuilder
                 if (SUS.isNotEmpty(imageBase64))
                     content.add(new NVGenericMap().build("type", "image_url")
                             .build(new NVGenericMap("image_url")
-                                    .build("url", "data:image/" + param.getValue("image-type") + ";base64,{" + imageBase64 + "}")));
+//                                    .build("url", "data:image/" + param.getValue("image-type") + ";base64,<" + imageBase64 + ">")
+                                    .build("url", "data:image/" + param.getValue("image-type") + ";base64," + imageBase64)
+                                    .build("detail", "high")));
 
 
 //                NVInt maxTokens = (NVInt) param.get("max-tokens");
@@ -196,7 +198,13 @@ public class GTPAPIBuilder
 //                if (maxTokens != null && maxTokens.getValue() > 200)
 //                    requestContent.build(new NVInt("max_tokens", maxTokens.getValue()));
                 // model o1-mini used max_completion_tokens instead of max-tokens
-                hmci.setContent(GSONUtil.toJSONDefault(requestContent));
+                String jsonPayload = GSONUtil.toJSONDefault(requestContent, true);
+
+
+                if (log.isEnabled()) {
+                    log.getLogger().info(jsonPayload);
+                }
+                hmci.setContent(jsonPayload);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
@@ -208,7 +216,7 @@ public class GTPAPIBuilder
 
 
     private void buildTextToSpeechEndPoint() {
-        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(GTP_URL, Command.TEXT_TO_SPEECH.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.TEXT_TO_SPEECH.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
         //textToSpeechHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, byte[]> textToSpeechEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TEXT_TO_SPEECH, DOMAIN, "Analyze Image based on prompt", textToSpeechHMCI);
         textToSpeechEndPoint.setRateController(GPT_RC);
@@ -283,8 +291,8 @@ public class GTPAPIBuilder
         return ret;
     }
 
-    public GPTAPI createAPI(String name, String description, NVGenericMap props) {
-        return HTTPAPIManager.SINGLETON.buildAPICaller(new GPTAPI(name, description), DOMAIN, props);
+    public AIAPI createAPI(String name, String description, NVGenericMap props) {
+        return HTTPAPIManager.SINGLETON.buildAPICaller(new AIAPI(name, description), DOMAIN, props);
     }
 
 }

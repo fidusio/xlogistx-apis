@@ -44,11 +44,11 @@
 
 
 
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>square</artifactId>
-            <version>RELEASE</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.squareup</groupId>-->
+<!--            <artifactId>square</artifactId>-->
+<!--            <version>RELEASE</version>-->
+<!--        </dependency>-->
 
     </dependencies>
 

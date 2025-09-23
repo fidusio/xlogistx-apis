@@ -9,7 +9,7 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>xlog-chatgpt</artifactId>
+    <artifactId>xlog-api-ai</artifactId>
 
 
 
@@ -21,6 +21,7 @@
         <dependency>
             <groupId>io.xlogistx</groupId>
             <artifactId>xlogistx-common</artifactId>
+            <version>${xlogistx.version}</version>
         </dependency>
     </dependencies>
 

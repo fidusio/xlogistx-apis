@@ -1,4 +1,4 @@
-package io.xlogistx.api.gpt;
+package io.xlogistx.api.ai;
 
 import io.xlogistx.common.image.ImageUtil;
 import org.zoxweb.server.http.HTTPAPIBuilder;
@@ -14,11 +14,11 @@ import java.io.*;
 import java.util.Date;
 import java.util.List;
 
-public class GPTAPI
+public class AIAPI
         extends HTTPAPICaller {
-    public static final LogWrapper log = new LogWrapper(GPTAPI.class);
+    public static final LogWrapper log = new LogWrapper(AIAPI.class);
 
-    protected GPTAPI(String name, String description) {
+    protected AIAPI(String name, String description) {
         super(name, description);
     }
 
@@ -40,33 +40,33 @@ public class GPTAPI
         param.setName(name);
         param.setValue(is);
         param.getProperties().build(new NVLong("length", is.available()));
-        NVGenericMap response = syncCall(GTPAPIBuilder.Command.TRANSCRIBE, param);
+        NVGenericMap response = syncCall(AIAPIBuilder.Command.TRANSCRIBE, param);
         IOUtil.close(is);
         return response.getValue("text");
     }
 
     public List<NVGenericMap> models() throws IOException {
 
-        NVGenericMap result = syncCall(GTPAPIBuilder.Command.MODELS, null);
+        NVGenericMap result = syncCall(AIAPIBuilder.Command.MODELS, null);
         NVGenericMapList data = result.getNV("data");
         return data.getValue();
     }
 
 
     public NVGenericMap model(String model) throws IOException {
-        return syncCall(GTPAPIBuilder.Command.MODELS, model);
+        return syncCall(AIAPIBuilder.Command.MODELS, model);
     }
 
     public String visionCompletion(String gptModel, String prompt, int maxTokens, InputStream is, String imageType) throws IOException {
-        return parseCompletionResponse(syncCall(GTPAPIBuilder.Command.COMPLETION, GTPAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, is, imageType)));
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, is, imageType)));
     }
 
     public String visionCompletion(String gptModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType) throws IOException {
-        return parseCompletionResponse(syncCall(GTPAPIBuilder.Command.COMPLETION, GTPAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, baos, imageType)));
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, baos, imageType)));
     }
 
     public String completion(String gptModel, String prompt, int maxTokens) throws IOException {
-        return parseCompletionResponse(syncCall(GTPAPIBuilder.Command.COMPLETION, GTPAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, maxTokens)));
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, maxTokens)));
     }
 
 
@@ -83,10 +83,16 @@ public class GPTAPI
     public static void main(String... args) {
         try {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
-            String gptAPIKey = params.stringValue("gpt-key");
+            String aiAPIKey = params.stringValue("ai-api-key");
+            String aiAPIURL = params.stringValue("ai-api-url", true);
 
-            GTPAPIBuilder.Command command = params.enumValue("command", GTPAPIBuilder.Command.values());
-            GPTAPI apiCaller = GTPAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(HTTPAuthScheme.BEARER, gptAPIKey)));
+
+            AIAPIBuilder.Command command = params.enumValue("command", AIAPIBuilder.Command.values());
+            AIAPI apiCaller = AIAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(HTTPAuthScheme.BEARER, aiAPIKey)));
+            if(aiAPIURL != null)
+            {
+                apiCaller.updateURL(aiAPIURL);
+            }
             NVGenericMap response = null;
             RateCounter rc = new RateCounter();
             rc.start();
@@ -99,9 +105,9 @@ public class GPTAPI
                     if (imageUrl != null) {
                         String imageType = ImageUtil.getImageFormat(imageUrl);
                         UByteArrayOutputStream imageBAOS = IOUtil.inputStreamToByteArray(new FileInputStream(imageUrl), true);
-                        completion = GTPAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, 0, imageBAOS, imageType);
+                        completion = AIAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, 0, imageBAOS, imageType);
                     } else
-                        completion = GTPAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, 0);
+                        completion = AIAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, 0);
 
                     response = apiCaller.syncCall(command, completion);
                     System.out.println(command + "\n" + response);
