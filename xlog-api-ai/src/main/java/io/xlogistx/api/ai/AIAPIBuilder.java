@@ -198,12 +198,12 @@ public class AIAPIBuilder
 //                if (maxTokens != null && maxTokens.getValue() > 200)
 //                    requestContent.build(new NVInt("max_tokens", maxTokens.getValue()));
                 // model o1-mini used max_completion_tokens instead of max-tokens
-                String jsonPayload = GSONUtil.toJSONDefault(requestContent, true);
+                String jsonPayload = GSONUtil.toJSONDefault(requestContent);
 
 
-                if (log.isEnabled()) {
-                    log.getLogger().info(jsonPayload);
-                }
+//                if (log.isEnabled()) {
+//                    log.getLogger().info(jsonPayload);
+//                }
                 hmci.setContent(jsonPayload);
             } catch (Exception e) {
                 e.printStackTrace();
