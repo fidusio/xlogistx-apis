@@ -266,7 +266,7 @@ public class DefaultOktaAdapter
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                log.info(ret);
+                log.getLogger().info("" + ret);
             } catch (HTTPCallException callException) {
 
                 HTTPResponseData errHRD = callException.getResponseData();
