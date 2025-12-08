@@ -37,11 +37,17 @@ public class AIAPI
      */
     public String transcribe(InputStream is, String name) throws IOException {
         NamedValue<InputStream> param = new NamedValue<InputStream>();
-        param.setName(name);
-        param.setValue(is);
-        param.getProperties().build(new NVLong("length", is.available()));
-        NVGenericMap response = syncCall(AIAPIBuilder.Command.TRANSCRIBE, param);
-        IOUtil.close(is);
+        NVGenericMap response = null;
+        try {
+            param.setName(name);
+            param.setValue(is);
+            param.getProperties().build(new NVLong("length", is.available()));
+            response = syncCall(AIAPIBuilder.Command.TRANSCRIBE, param);
+        }
+        finally {
+            IOUtil.close(is);
+        }
+
         return response.getValue("text");
     }
 

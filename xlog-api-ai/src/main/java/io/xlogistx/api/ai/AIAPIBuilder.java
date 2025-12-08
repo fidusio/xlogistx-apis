@@ -75,6 +75,7 @@ public class AIAPIBuilder
         buildSpeechToTextAPI();
         buildCompletionEndPoint();
         buildModelsEndpoint();
+        buildTextToSpeechEndPoint();
     }
 
     private void buildModelsEndpoint() {

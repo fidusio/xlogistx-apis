@@ -79,6 +79,8 @@ ehthumbs.db
 *.orig
 *.save
 
+.claude
+
 # Custom
 # Add any custom exclusions here
 

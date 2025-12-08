@@ -49,6 +49,7 @@
     <modules>
         <module>apache-james</module>
         <module>xlog-api-ai</module>
+        <module>xlog-api-anthropic</module>
         <module>xlog-api</module>
         <module>okta</module>
         <module>payment</module>
