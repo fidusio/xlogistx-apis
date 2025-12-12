@@ -6,12 +6,15 @@ import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
-import org.zoxweb.shared.http.HTTPAuthScheme;
 import org.zoxweb.shared.http.HTTPAuthorization;
-import org.zoxweb.shared.util.*;
+import org.zoxweb.shared.util.NVGenericMap;
+import org.zoxweb.shared.util.NVGenericMapList;
+import org.zoxweb.shared.util.ParamUtil;
+import org.zoxweb.shared.util.RateCounter;
 
-import java.io.*;
-import java.util.List;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class AnthropicAPI
         extends HTTPAPICaller {
@@ -144,7 +147,7 @@ public class AnthropicAPI
 
             AnthropicAPIBuilder.Command command = params.enumValue("command", AnthropicAPIBuilder.Command.values());
             AnthropicAPI apiCaller = AnthropicAPIBuilder.SINGLETON.createAPI("main-app", "Command line api",
-                    HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(HTTPAuthScheme.XAPI, apiKey)));
+                    HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization("x-api-key", apiKey, true)));
 
             if (apiURL != null) {
                 apiCaller.updateURL(apiURL);
