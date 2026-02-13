@@ -8,6 +8,7 @@ import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.shared.http.HTTPAuthScheme;
 import org.zoxweb.shared.http.HTTPAuthorization;
+import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.util.*;
 
 import java.io.*;
@@ -45,7 +46,7 @@ public class AIAPI
             response = syncCall(AIAPIBuilder.Command.TRANSCRIBE, param);
         }
         finally {
-            IOUtil.close(is);
+            SharedIOUtil.close(is);
         }
 
         return response.getValue("text");

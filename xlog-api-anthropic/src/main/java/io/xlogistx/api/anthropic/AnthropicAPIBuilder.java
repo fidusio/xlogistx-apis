@@ -3,11 +3,14 @@ package io.xlogistx.api.anthropic;
 import org.zoxweb.server.http.HTTPAPIBuilder;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
 import org.zoxweb.server.http.HTTPAPIManager;
-import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.util.GSONUtil;
-import org.zoxweb.shared.http.*;
+import org.zoxweb.shared.http.HTTPMediaType;
+import org.zoxweb.shared.http.HTTPMessageConfig;
+import org.zoxweb.shared.http.HTTPMessageConfigInterface;
+import org.zoxweb.shared.http.HTTPMethod;
+import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.util.*;
 
 import java.io.Closeable;
@@ -83,7 +86,7 @@ public class AnthropicAPIBuilder
                 } else if (imageValue instanceof InputStream) {
                     imageBuffer = new byte[((InputStream) imageValue).available()];
                     imageLength = ((InputStream) imageValue).read(imageBuffer);
-                    IOUtil.close((Closeable) imageValue);
+                    SharedIOUtil.close((Closeable) imageValue);
                 }
 
                 String imageBase64 = imageBuffer != null ? SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,

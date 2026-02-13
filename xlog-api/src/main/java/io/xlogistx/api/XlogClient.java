@@ -66,7 +66,7 @@ public class XlogClient
             ConsumerCallback<NVGenericMap> callback = new ConsumerCallback<NVGenericMap>() {
 
 
-                public void exception(Exception e) {
+                public void exception(Throwable e) {
                     fail.incrementAndGet();
                     if (print) {
                         e.printStackTrace();

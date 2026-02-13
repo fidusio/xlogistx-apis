@@ -3,11 +3,11 @@ package io.xlogistx.api.ai;
 import org.zoxweb.server.http.HTTPAPIBuilder;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
 import org.zoxweb.server.http.HTTPAPIManager;
-import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.*;
+import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.util.*;
 
 import java.io.ByteArrayInputStream;
@@ -165,7 +165,7 @@ public class AIAPIBuilder
                 } else if (imageValue instanceof InputStream) {
                     imageBuffer = new byte[((InputStream) imageValue).available()];
                     imageLength = ((InputStream) imageValue).read(imageBuffer);
-                    IOUtil.close((Closeable) imageValue);
+                    SharedIOUtil.close((Closeable) imageValue);
                 }
 
 
