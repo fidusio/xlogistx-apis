@@ -10,10 +10,8 @@ import org.zoxweb.shared.http.HTTPMediaType;
 import org.zoxweb.shared.http.HTTPMessageConfig;
 import org.zoxweb.shared.http.HTTPMessageConfigInterface;
 import org.zoxweb.shared.http.HTTPMethod;
-import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.util.*;
 
-import java.io.Closeable;
 import java.io.InputStream;
 
 public class AnthropicAPIBuilder
@@ -24,12 +22,18 @@ public class AnthropicAPIBuilder
     public static final RateController ANTHROPIC_RC = new RateController("ANTHROPIC-RC", "60/m");
     public static final String DOMAIN = "anthropic-api";
     public static final String ANTHROPIC_URL = "https://api.anthropic.com";
-    public static final String ANTHROPIC_VERSION = "2023-06-01";
-    public static final String DEFAULT_MODEL = "claude-sonnet-4-20250514";
+    public static final String DEFAULT_ANTHROPIC_VERSION = "2023-06-01";
+    public static final String DEFAULT_MODEL = "claude-opus-4-8";
+    public static final int DEFAULT_MAX_TOKENS = 4096;
+
+    private volatile String anthropicVersion = DEFAULT_ANTHROPIC_VERSION;
+    private volatile String defaultModel = DEFAULT_MODEL;
+    private volatile int defaultMaxTokens = DEFAULT_MAX_TOKENS;
 
     public enum Command
             implements GetNameValue<String>, GetDescription {
         MESSAGES("messages", "v1/messages", "Create a message endpoint"),
+        COUNT_TOKENS("count-tokens", "v1/messages/count_tokens", "Count the tokens of a message endpoint"),
         ;
         private final String name;
         private final String uri;
@@ -58,101 +62,82 @@ public class AnthropicAPIBuilder
 
 
     private AnthropicAPIBuilder() {
-        buildMessagesEndpoint();
+        buildEndpoints();
     }
 
-    private void buildMessagesEndpoint() {
-        HTTPMessageConfigInterface messagesHMCI = HTTPMessageConfig.createAndInit(ANTHROPIC_URL, Command.MESSAGES.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
-        messagesHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
-        // Anthropic requires these headers
-        messagesHMCI.getHeaders().build("anthropic-version", ANTHROPIC_VERSION);
+    /**
+     * @return the anthropic-version header value sent with every request
+     */
+    public String getAnthropicVersion() {
+        return anthropicVersion;
+    }
 
-        HTTPAPIEndPoint<NVGenericMap, NVGenericMap> messagesEndpoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.MESSAGES, DOMAIN, "Create a message", messagesHMCI);
-        messagesEndpoint.setRateController(ANTHROPIC_RC);
+    /**
+     * Override the anthropic-version header value, applied to all subsequent requests
+     * @param version the anthropic-version header value (e.g., "2023-06-01")
+     * @return this builder
+     */
+    public AnthropicAPIBuilder setAnthropicVersion(String version) {
+        SUS.checkIfNulls("version null", version);
+        this.anthropicVersion = version;
+        return this;
+    }
 
-        messagesEndpoint.setDataDecoder(hrd -> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
-        if (log.isEnabled()) log.getLogger().info("Endpoint:" + messagesEndpoint.toCanonicalID());
+    /**
+     * @return the model used when a request does not specify one
+     */
+    public String getDefaultModel() {
+        return defaultModel;
+    }
 
-        messagesEndpoint.setDataEncoder((hmci, param) -> {
-            try {
-                Object imageValue = param.getValue("image");
-                byte[] imageBuffer = null;
-                int imageOffset = 0;
-                int imageLength = -1;
+    /**
+     * Override the default model, applied when a request does not specify one
+     * @param model the model id (e.g., "claude-opus-4-8")
+     * @return this builder
+     */
+    public AnthropicAPIBuilder setDefaultModel(String model) {
+        SUS.checkIfNulls("model null", model);
+        this.defaultModel = model;
+        return this;
+    }
 
-                if (imageValue instanceof UByteArrayOutputStream) {
-                    imageBuffer = ((UByteArrayOutputStream) imageValue).getInternalBuffer();
-                    imageLength = ((UByteArrayOutputStream) imageValue).size();
-                } else if (imageValue instanceof InputStream) {
-                    imageBuffer = new byte[((InputStream) imageValue).available()];
-                    imageLength = ((InputStream) imageValue).read(imageBuffer);
-                    SharedIOUtil.close((Closeable) imageValue);
-                }
+    /**
+     * @return the max_tokens used when a request does not specify a positive value
+     */
+    public int getDefaultMaxTokens() {
+        return defaultMaxTokens;
+    }
 
-                String imageBase64 = imageBuffer != null ? SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
-                        imageBuffer,
-                        imageOffset,
-                        imageLength) : null;
+    /**
+     * Override the default max_tokens, applied when a request does not specify a positive value
+     * @param maxTokens the max_tokens value, must be &gt; 0
+     * @return this builder
+     */
+    public AnthropicAPIBuilder setDefaultMaxTokens(int maxTokens) {
+        if (maxTokens <= 0)
+            throw new IllegalArgumentException("maxTokens must be > 0: " + maxTokens);
+        this.defaultMaxTokens = maxTokens;
+        return this;
+    }
 
-                NVGenericMap requestContent = new NVGenericMap();
-                requestContent.build("model", param.getValue("model"));
+    /**
+     * Register one endpoint per command for framework wiring (domain lookup, url updates, canonical ids).
+     * The request encoding and actual API calls are delegated to the com.anthropic:anthropic-java SDK
+     * by AnthropicAPI.syncCall, these endpoints are not used to perform the HTTP calls.
+     */
+    private void buildEndpoints() {
+        for (Command command : Command.values()) {
+            HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(ANTHROPIC_URL, command.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
+            hmci.setAccept(HTTPMediaType.APPLICATION_JSON);
+            // Anthropic requires these headers
+            hmci.getHeaders().build("anthropic-version", anthropicVersion);
 
-                // Handle max_tokens - Anthropic requires this field
-                NVInt maxTokens = (NVInt) param.get("max-tokens");
-                int maxTokensValue = (maxTokens != null && maxTokens.getValue() > 0) ? maxTokens.getValue() : 4096;
-                requestContent.build(new NVInt("max_tokens", maxTokensValue));
-
-                // Handle system prompt if provided
-                String systemPrompt = param.getValue("system");
-                if (SUS.isNotEmpty(systemPrompt)) {
-                    requestContent.build("system", systemPrompt);
-                }
-
-                // Build messages array
-                NVGenericMapList messages = new NVGenericMapList("messages");
-                requestContent.build(messages);
-
-                NVGenericMap userMessage = new NVGenericMap();
-                messages.add(userMessage);
-                userMessage.build("role", "user");
-
-                // Build content - can be string or array for vision
-                if (SUS.isNotEmpty(imageBase64)) {
-                    // Vision request - content is an array
-                    NVGenericMapList content = new NVGenericMapList("content");
-                    userMessage.add(content);
-
-                    // Add image block
-                    String imageMediaType = param.getValue("image-type");
-                    if (imageMediaType != null && !imageMediaType.contains("/")) {
-                        imageMediaType = "image/" + imageMediaType;
-                    }
-
-                    content.add(new NVGenericMap()
-                            .build("type", "image")
-                            .build(new NVGenericMap("source")
-                                    .build("type", "base64")
-                                    .build("media_type", imageMediaType)
-                                    .build("data", imageBase64)));
-
-                    // Add text block
-                    content.add(new NVGenericMap()
-                            .build("type", "text")
-                            .build("text", param.getValue("prompt")));
-                } else {
-                    // Text-only request - content is a string
-                    userMessage.build("content", param.getValue("prompt"));
-                }
-
-                String jsonPayload = GSONUtil.toJSONDefault(requestContent);
-                hmci.setContent(jsonPayload);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-            return hmci;
-        });
-        HTTPAPIManager.SINGLETON.register(messagesEndpoint);
+            HTTPAPIEndPoint<NVGenericMap, NVGenericMap> endpoint = HTTPAPIManager.SINGLETON.buildEndPoint(command, DOMAIN, command.getDescription(), hmci);
+            endpoint.setRateController(ANTHROPIC_RC);
+            endpoint.setDataDecoder(hrd -> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
+            if (log.isEnabled()) log.getLogger().info("Endpoint:" + endpoint.toCanonicalID());
+            HTTPAPIManager.SINGLETON.register(endpoint);
+        }
     }
 
 
@@ -170,9 +155,9 @@ public class AnthropicAPIBuilder
 
     public NVGenericMap toVisionParams(String model, String prompt, int maxTokens, UByteArrayOutputStream image, String imageType, String systemPrompt) {
         NVGenericMap ret = new NVGenericMap()
-                .build("model", model)
+                .build("model", SUS.isNotEmpty(model) ? model : defaultModel)
                 .build("prompt", prompt)
-                .build(new NVInt("max-tokens", maxTokens));
+                .build(new NVInt("max-tokens", maxTokens > 0 ? maxTokens : defaultMaxTokens));
 
         if (SUS.isNotEmpty(systemPrompt)) {
             ret.build("system", systemPrompt);
@@ -190,9 +175,9 @@ public class AnthropicAPIBuilder
 
     public NVGenericMap toVisionParams(String model, String prompt, int maxTokens, InputStream image, String imageType, String systemPrompt) {
         NVGenericMap ret = new NVGenericMap()
-                .build("model", model)
+                .build("model", SUS.isNotEmpty(model) ? model : defaultModel)
                 .build("prompt", prompt)
-                .build(new NVInt("max-tokens", maxTokens));
+                .build(new NVInt("max-tokens", maxTokens > 0 ? maxTokens : defaultMaxTokens));
 
         if (SUS.isNotEmpty(systemPrompt)) {
             ret.build("system", systemPrompt);
