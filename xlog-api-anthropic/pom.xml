@@ -10,14 +10,29 @@
     </parent>
 
     <artifactId>xlog-api-anthropic</artifactId>
-
+    <properties>
+        <anthropic.version>2.48.0</anthropic.version>
+    </properties>
 
 
     <dependencies>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.anthropic</groupId>
             <artifactId>anthropic-java</artifactId>
-            <version>2.34.0</version>
+            <version>${anthropic.version}</version>
         </dependency>
         <dependency>
             <groupId>org.zoxweb</groupId>
@@ -29,5 +44,15 @@
             <version>${xlogistx.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

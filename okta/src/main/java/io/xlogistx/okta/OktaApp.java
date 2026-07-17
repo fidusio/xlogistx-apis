@@ -91,7 +91,7 @@ public class OktaApp {
 
             // create a adapter
             oktaAdapter.setURL(url)
-                    .setHTTPAuthorization(new HTTPAuthorization("SSWS", token))
+                    .setHTTPAuthorization(HTTPAuthorization.createAuthorization("SSWS", token))
                     .enableHttpCalling(enabledHttp);
 
             DefaultOktaAdapter.log.setEnabled(true);

@@ -29,7 +29,7 @@ public class RapidAPI
             String apiKey = params.stringValue("api-key");
             String[] emails = ParamUtil.parseWithSep(",", params.stringValue("emails"));
 
-            RapidAPI rapidAPI = RapidAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(RapidAPIBuilder.API_KEY_HEADER_NAME, apiKey, true)));
+            RapidAPI rapidAPI = RapidAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, HTTPAuthorization.createGeneric(RapidAPIBuilder.API_KEY_HEADER_NAME, null, apiKey)));
 
             for (String email : emails) {
                 NVGenericMap nvmg = rapidAPI.checkEmail(email);

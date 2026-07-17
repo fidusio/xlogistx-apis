@@ -49,7 +49,7 @@ public class PayPalRestAPI {
         hcc.getHeaders().add(new NVPair(HTTPHeader.ACCEPT, HTTPMediaType.APPLICATION_JSON));
         hcc.getHeaders().add(new NVPair(HTTPHeader.ACCEPT_LANGUAGE, "en_US"));
         //hcc.getHeaderParameters().add(HTTPAuthorizationType.BEARER.toHTTPHeader(token.getTokenType(), token.getAccessToken()));
-        hcc.setAuthorization(new HTTPAuthorization(HTTPAuthScheme.BEARER, token.getAccessToken()));
+        hcc.setAuthorization(HTTPAuthorization.createBearer(token.getAccessToken()));
         String json = GSONUtil.toJSON(payment, true, false, false);
         hcc.setContent(SharedStringUtil.getBytes(json));
 
@@ -68,7 +68,7 @@ public class PayPalRestAPI {
         hcc.getHeaders().add(new NVPair(HTTPHeader.ACCEPT, HTTPMediaType.APPLICATION_JSON));
         hcc.getHeaders().add(new NVPair(HTTPHeader.ACCEPT_LANGUAGE, "en_US"));
         //hcc.getHeaderParameters().add(HTTPAuthorizationType.BEARER.toHTTPHeader(token.getTokenType(), token.getAccessToken()));
-        hcc.setAuthorization(new HTTPAuthorization(HTTPAuthScheme.BEARER,token.getAccessToken()));
+        hcc.setAuthorization(HTTPAuthorization.createBearer(token.getAccessToken()));
         PPAmountDAO amount = new PPAmountDAO();
         amount.setTotal(total);
         amount.setCurrency(currency);

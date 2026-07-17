@@ -6,7 +6,6 @@ import org.zoxweb.server.http.HTTPAPICaller;
 import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
-import org.zoxweb.shared.http.HTTPAuthScheme;
 import org.zoxweb.shared.http.HTTPAuthorization;
 import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.util.*;
@@ -95,7 +94,7 @@ public class AIAPI
 
 
             AIAPIBuilder.Command command = params.enumValue("command", AIAPIBuilder.Command.values());
-            AIAPI apiCaller = AIAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null, new HTTPAuthorization(HTTPAuthScheme.BEARER, aiAPIKey)));
+            AIAPI apiCaller = AIAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null,  HTTPAuthorization.createBearer(aiAPIKey)));
             if(aiAPIURL != null)
             {
                 apiCaller.updateURL(aiAPIURL);

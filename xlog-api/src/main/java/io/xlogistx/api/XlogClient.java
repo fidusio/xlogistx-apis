@@ -6,7 +6,7 @@ import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.task.TaskUtil;
 import org.zoxweb.server.util.DateUtil;
 import org.zoxweb.server.util.GSONUtil;
-import org.zoxweb.shared.http.HTTPAuthorizationBasic;
+import org.zoxweb.shared.http.HTTPAuthorization;
 import org.zoxweb.shared.task.ConsumerCallback;
 import org.zoxweb.shared.util.Const;
 import org.zoxweb.shared.util.NVGenericMap;
@@ -84,7 +84,7 @@ public class XlogClient
             };
 
             if (password != null && user != null) {
-                apiCaller.setHTTPAuthorization(new HTTPAuthorizationBasic(user, password));
+                apiCaller.setHTTPAuthorization(HTTPAuthorization.createBasic(user, password));
             }
             //apiCaller.updateRateController(new RateController("test", "10/s");
 
