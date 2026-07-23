@@ -119,7 +119,7 @@ public class AIAPI
             switch (command) {
                 case COMPLETION:
                     String prompt = params.stringValue("prompt");
-                    String gptModel = params.stringValue("model");
+                    String gptModel = params.stringValue("ai-model");
                     String imageUrl = params.stringValue("image-url", true);
                     NVGenericMap completion = null;
                     if (imageUrl != null) {
