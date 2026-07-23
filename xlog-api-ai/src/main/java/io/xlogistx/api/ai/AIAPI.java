@@ -11,7 +11,7 @@ import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.util.*;
 
 import java.io.*;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AIAPI
@@ -21,7 +21,6 @@ public class AIAPI
     protected AIAPI(String name, String description) {
         super(name, description);
     }
-
 
 
     public String transcribe(File file) throws IOException {
@@ -43,12 +42,23 @@ public class AIAPI
             param.setValue(is);
             param.getProperties().build(new NVLong("length", is.available()));
             response = syncCall(AIAPIBuilder.Command.TRANSCRIBE, param);
-        }
-        finally {
+        } finally {
             SharedIOUtil.close(is);
         }
 
         return response.getValue("text");
+    }
+
+
+    public String[] availableModels()
+            throws IOException {
+        List<NVGenericMap> models = models();
+        List<String> ret = new ArrayList<>();
+        for (NVGenericMap model : models) {
+            ret.add(model.getValue("id"));
+        }
+
+        return ret.toArray(new String[ret.size()]);
     }
 
     public List<NVGenericMap> models() throws IOException {
@@ -63,16 +73,16 @@ public class AIAPI
         return syncCall(AIAPIBuilder.Command.MODELS, model);
     }
 
-    public String visionCompletion(String gptModel, String prompt, int maxTokens, InputStream is, String imageType) throws IOException {
-        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, is, imageType)));
+    public String visionCompletion(String aiModel, String prompt, int maxTokens, InputStream is, String imageType) throws IOException {
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, is, imageType)));
     }
 
-    public String visionCompletion(String gptModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType) throws IOException {
-        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(gptModel, prompt, maxTokens, baos, imageType)));
+    public String visionCompletion(String aiModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType) throws IOException {
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, baos, imageType)));
     }
 
-    public String completion(String gptModel, String prompt, int maxTokens) throws IOException {
-        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, maxTokens)));
+    public String completion(String aiModel, String prompt, int maxTokens) throws IOException {
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toPromptParams(aiModel, prompt, maxTokens)));
     }
 
 
@@ -91,13 +101,17 @@ public class AIAPI
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);
             String aiAPIKey = params.stringValue("ai-api-key");
             String aiAPIURL = params.stringValue("ai-api-url", true);
+            AIAPIBuilder.AIAPIType aiType = params.enumValue("ai-type", AIAPIBuilder.AIAPIType.values());
 
 
             AIAPIBuilder.Command command = params.enumValue("command", AIAPIBuilder.Command.values());
-            AIAPI apiCaller = AIAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(null,  HTTPAuthorization.createBearer(aiAPIKey)));
-            if(aiAPIURL != null)
-            {
-                apiCaller.updateURL(aiAPIURL);
+
+
+            AIAPI apiCaller;
+            if (aiType != null) {
+                apiCaller = AIAPIBuilder.createAIAPI(aiType, null, aiAPIKey);
+            } else {
+                apiCaller = AIAPIBuilder.SINGLETON.createAPI("main-app", "Command line api", HTTPAPIBuilder.Prop.toProp(aiAPIURL, HTTPAuthorization.createBearer(aiAPIKey)));
             }
             NVGenericMap response = null;
             RateCounter rc = new RateCounter();
@@ -127,12 +141,13 @@ public class AIAPI
                     break;
                 case MODELS:
 
-                    List<NVGenericMap> models = apiCaller.models();
-                    for (NVGenericMap model : models) {
-                        int date = model.getValue("created");
-                        System.out.println(model.getValue("id") + " created: " + new Date(((long) date * 1000)));
+                    String[] models = apiCaller.availableModels();
+                    for (String model : models) {
+//                        System.out.println(command + "\n" + model);
+//                        int date = model.getValue("created");
+                        System.out.println(model);
                     }
-                    System.out.println("Models count: " + models.size());
+                    System.out.println("Models count: " + models.length);
                     break;
             }
             rc.stop(1);

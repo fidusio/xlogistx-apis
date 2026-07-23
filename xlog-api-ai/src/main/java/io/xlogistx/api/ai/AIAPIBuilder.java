@@ -19,29 +19,87 @@ import java.nio.file.Files;
 public class AIAPIBuilder
         implements HTTPAPIBuilder {
 
+    public static final BiDataEncoder<HTTPMessageConfigInterface, HTTPAuthorization, HTTPMessageConfigInterface> ANTHROPIC_AUTHORIZATION = (h, a) -> {
+        h.setAuthorization(HTTPAuthorization.createGeneric("x-api-key", null, a.getToken()));
+        h.getHeaders().build("anthropic-version", "2023-06-01");
+        return h;
+    };
     public static final LogWrapper log = new LogWrapper(AIAPIBuilder.class).setEnabled(true);
-    public static final AIAPIBuilder SINGLETON = new AIAPIBuilder();
+
     public static final RateController GPT_RC = new RateController("GPT-RC", "100/m");
     public static final String DOMAIN = "ai-api";
     public static final String TRANSCRIBE_MODEL = "whisper-1";
 
-    public static final String AI_URL = "https://api.openai.com";
+
+    //public static final String AI_URL = "https://api.openai.com";
+
+    public enum AIAPIType
+            implements GetNameValue<String>, GetDescription {
+        OPEN_AI("open-ai", "OpenAI API", "https://api.openai.com/v1"),
+        GROK("grok-ai", "Grok API", "https://api.x.ai/v1"),
+        GEMINI("gemini-ai", "Gemini API", "https://generativelanguage.googleapis.com/v1beta/openai"),
+        ANTHROPIC("anthropic-ai", "Anthropic  API", "https://api.anthropic.com/v1"),
+        ;
+        private final String name;
+        private final String description;
+        private final String url;
+
+        AIAPIType(String name, String description, String url) {
+            this.name = name;
+            this.description = description;
+            this.url = url;
+        }
+
+        /**
+         * Returns the property description.
+         *
+         * @return description
+         */
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        /**
+         * @return the name of the object
+         */
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns the value.
+         *
+         * @return typed value
+         */
+        @Override
+        public String getValue() {
+            return url;
+        }
+
+        public String getURL() {
+            return getValue();
+        }
+    }
 
     public enum Command
             implements GetNameValue<String>, GetDescription {
-        COMPLETION("completion", "v1/chat/completions", "Completion endpoint"),
-        TRANSCRIBE("transcribe", "v1/audio/transcriptions", "Audio to text endpoint"),
-        TEXT_TO_SPEECH("text-to-speech", "v1/audio/speech", "Test to audio endpoint"),
-        AUDIO_TRANSLATION("audio-translation", "v1/audio/translations", "Audio translation endpoint"),
-        MODELS("models", "v1/models/{model}", "Get the supported models endpoint"),
+        COMPLETION("completion", "chat/completions", HTTPMethod.POST, "Completion endpoint"),
+        TRANSCRIBE("transcribe", "audio/transcriptions", HTTPMethod.POST, "Audio to text endpoint"),
+        TEXT_TO_SPEECH("text-to-speech", "audio/speech", HTTPMethod.POST, "Test to audio endpoint"),
+        AUDIO_TRANSLATION("audio-translation", "audio/translations", HTTPMethod.POST, "Audio translation endpoint"),
+        MODELS("models", "models/{model}", HTTPMethod.GET, "Get the supported models endpoint"),
         ;
         private final String name;
         private final String uri;
         private final String description;
+        private final HTTPMethod httpMethod;
 
-        Command(String name, String uri, String description) {
+        Command(String name, String uri, HTTPMethod method, String description) {
             this.name = name;
             this.uri = uri;
+            this.httpMethod = method;
             this.description = description;
         }
 
@@ -68,7 +126,14 @@ public class AIAPIBuilder
         public String getValue() {
             return uri;
         }
+
+        HTTPMethod getHTTPMethod() {
+            return httpMethod;
+        }
     }
+
+
+    public static final AIAPIBuilder SINGLETON = new AIAPIBuilder();
 
 
     private AIAPIBuilder() {
@@ -79,12 +144,14 @@ public class AIAPIBuilder
     }
 
     private void buildModelsEndpoint() {
-        HTTPMessageConfigInterface modelsHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.MODELS.getValue(), HTTPMethod.GET, true);
+        HTTPMessageConfigInterface modelsHMCI = HTTPMessageConfig.createAndInit(null, Command.MODELS.getValue(), Command.MODELS.getHTTPMethod(), true);
         modelsHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
+        modelsHMCI.getHeaders().remove(HTTPHeader.CONTENT_TYPE);
         HTTPAPIEndPoint<String, NVGenericMap> modelsAPI = HTTPAPIManager.SINGLETON.buildEndPoint(Command.MODELS, DOMAIN, "Get the supported models", modelsHMCI);
         modelsAPI.setRateController(GPT_RC);
 
         modelsAPI.setDataDecoder(hrd -> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
+        //modelsAPI.setAuthorizationEncoder(ANTHROPIC_AUTHORIZATION);
         if (log.isEnabled()) log.getLogger().info("Endpoint:" + modelsAPI.toCanonicalID());
         modelsAPI.setDataEncoder((hmci, model) -> {
             if (log.isEnabled()) log.getLogger().info("Model " + model);
@@ -101,7 +168,7 @@ public class AIAPIBuilder
 
     private void buildSpeechToTextAPI() {
 
-        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.TRANSCRIBE.getValue(), HTTPMethod.POST, true, HTTPMediaType.MULTIPART_FORM_DATA);
+        HTTPMessageConfigInterface speechToTextHMCI = HTTPMessageConfig.createAndInit(null, Command.TRANSCRIBE.getValue(), Command.TRANSCRIBE.getHTTPMethod(), true, HTTPMediaType.MULTIPART_FORM_DATA);
         HTTPAPIEndPoint<NamedValue<?>, NVGenericMap> speechToText = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TRANSCRIBE, DOMAIN, "Convert speech to text", speechToTextHMCI);
         speechToText.setRateController(GPT_RC);
 
@@ -144,7 +211,7 @@ public class AIAPIBuilder
     }
 
     private void buildCompletionEndPoint() {
-        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.COMPLETION.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface completionsPromptHMCI = HTTPMessageConfig.createAndInit(null, Command.COMPLETION.getValue(), Command.COMPLETION.getHTTPMethod(), true, HTTPMediaType.APPLICATION_JSON);
         completionsPromptHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, NVGenericMap> completionEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.COMPLETION, DOMAIN, "Analyze Image based on prompt", completionsPromptHMCI);
         completionEndPoint.setRateController(GPT_RC);
@@ -217,7 +284,7 @@ public class AIAPIBuilder
 
 
     private void buildTextToSpeechEndPoint() {
-        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(AI_URL, Command.TEXT_TO_SPEECH.getValue(), HTTPMethod.POST, true, HTTPMediaType.APPLICATION_JSON);
+        HTTPMessageConfigInterface textToSpeechHMCI = HTTPMessageConfig.createAndInit(null, Command.TEXT_TO_SPEECH.getValue(), Command.TEXT_TO_SPEECH.getHTTPMethod(), true, HTTPMediaType.APPLICATION_JSON);
         //textToSpeechHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
         HTTPAPIEndPoint<NVGenericMap, byte[]> textToSpeechEndPoint = HTTPAPIManager.SINGLETON.buildEndPoint(Command.TEXT_TO_SPEECH, DOMAIN, "Analyze Image based on prompt", textToSpeechHMCI);
         textToSpeechEndPoint.setRateController(GPT_RC);
@@ -294,6 +361,16 @@ public class AIAPIBuilder
 
     public AIAPI createAPI(String name, String description, NVGenericMap props) {
         return HTTPAPIManager.SINGLETON.buildAPICaller(new AIAPI(name, description), DOMAIN, props);
+    }
+
+
+    public static AIAPI createAIAPI(AIAPIType aiType, String name, String aiAPIKey) {
+        SUS.checkIfNull("aiType", aiType);
+        AIAPI ret = AIAPIBuilder.SINGLETON.createAPI( name != null ? name : aiType.getName() , null, HTTPAPIBuilder.Prop.toProp(aiType.getURL(), HTTPAuthorization.createBearer(aiAPIKey)));
+        if (aiType == AIAPIType.ANTHROPIC) {
+            ret.lookupEndPoint(Command.MODELS.getName()).setAuthorizationEncoder(ANTHROPIC_AUTHORIZATION);
+        }
+        return ret;
     }
 
 }
