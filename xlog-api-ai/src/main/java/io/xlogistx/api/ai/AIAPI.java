@@ -73,16 +73,102 @@ public class AIAPI
         return syncCall(AIAPIBuilder.Command.MODELS, model);
     }
 
+    /**
+     * Chat completion with an image to analyze based on the prompt
+     * @param aiModel the ai model to use
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @param is the image content input stream
+     * @param imageType the image type ie: png, jpeg
+     * @return the completion response text
+     * @throws IOException in case of api error
+     */
     public String visionCompletion(String aiModel, String prompt, int maxTokens, InputStream is, String imageType) throws IOException {
         return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, is, imageType)));
     }
 
+    /**
+     * Chat completion with an image to analyze based on the prompt
+     * @param aiModel the ai model to use
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @param baos the image content buffer
+     * @param imageType the image type ie: png, jpeg
+     * @return the completion response text
+     * @throws IOException in case of api error
+     */
     public String visionCompletion(String aiModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType) throws IOException {
         return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, baos, imageType)));
     }
 
+    /**
+     * Chat completion based on a text prompt
+     * @param aiModel the ai model to use
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @return the completion response text
+     * @throws IOException in case of api error
+     */
     public String completion(String aiModel, String prompt, int maxTokens) throws IOException {
         return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toPromptParams(aiModel, prompt, maxTokens)));
+    }
+
+    /**
+     * Chat completion with a skill .md file merged with the prompt via {@link #toSkillPrompt(String, String)}
+     * @param aiModel the ai model to use
+     * @param skillMD the skill .md file
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @return the completion response text
+     * @throws IOException in case of api or file error
+     */
+    public String completion(String aiModel, File skillMD, String prompt, int maxTokens) throws IOException {
+        return completion(aiModel, new FileInputStream(skillMD), prompt, maxTokens);
+    }
+
+    /**
+     * Chat completion with a preloaded skill content merged with the prompt via {@link #toSkillPrompt(String, String)}
+     * @param aiModel the ai model to use
+     * @param skillContent the preloaded skill content, if null or empty the prompt is sent as is
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @return the completion response text
+     * @throws IOException in case of api error
+     */
+    public String completion(String aiModel, String skillContent, String prompt, int maxTokens) throws IOException {
+        return completion(aiModel, toSkillPrompt(skillContent, prompt), maxTokens);
+    }
+
+    /**
+     * Chat completion with a skill content read from an input stream and merged with the prompt via {@link #toSkillPrompt(String, String)}
+     * @param aiModel the ai model to use
+     * @param skillIS the skill content input stream, always closed
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @return the completion response text
+     * @throws IOException in case of api or stream error
+     */
+    public String completion(String aiModel, InputStream skillIS, String prompt, int maxTokens) throws IOException {
+        String skillContent;
+        try {
+            skillContent = IOUtil.inputStreamToString(skillIS, true);
+        } finally {
+            SharedIOUtil.close(skillIS);
+        }
+        return completion(aiModel, toSkillPrompt(skillContent, prompt), maxTokens);
+    }
+
+    /**
+     * Merge a skill content with a prompt, the skill is wrapped in a &lt;skill&gt; tag block
+     * followed by the prompt, AI service agnostic since the result is a plain prompt
+     * @param skillContent the skill text usually the content of a skill .md file
+     * @param prompt the user prompt
+     * @return the merged prompt
+     */
+    public static String toSkillPrompt(String skillContent, String prompt) {
+        if (SUS.isEmpty(skillContent))
+            return prompt;
+        return "<skill>\n" + skillContent + "\n</skill>\n\n" + prompt;
     }
 
 
@@ -119,6 +205,9 @@ public class AIAPI
             switch (command) {
                 case COMPLETION:
                     String prompt = params.stringValue("prompt");
+                    String skillMD = params.stringValue("skill-md", true);
+                    if (skillMD != null)
+                        prompt = toSkillPrompt(IOUtil.inputStreamToString(new FileInputStream(skillMD), true), prompt);
                     String gptModel = params.stringValue("ai-model");
                     String imageUrl = params.stringValue("image-url", true);
                     NVGenericMap completion = null;
