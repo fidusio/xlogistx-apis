@@ -7,12 +7,14 @@ import org.zoxweb.server.http.HTTPCallback;
 import org.zoxweb.server.io.IOUtil;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
+import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.HTTPAuthorization;
 import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.task.ConsumerCallback;
 import org.zoxweb.shared.util.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,13 +22,81 @@ public class AIAPI
         extends HTTPAPICaller {
     public static final LogWrapper log = new LogWrapper(AIAPI.class);
 
+
+    public static final  DataDecoder<NVGenericMap, String> AIMDDecoder = (input)-> {
+        if (input == null)
+            return null;
+
+        // error payload: {"error": {"message": ..., "type": ...}}
+        GetNameValue<?> error = input.get("error");
+        if (error instanceof NVGenericMap) {
+            String message = ((NVGenericMap) error).decodedValue("message", DataDecoder.AsStringOrNull);
+            return "> **Error:** " + (message != null ? message
+                    : "`" + GSONUtil.toJSONDefault(error) + "`");
+        }
+
+        // chat completions: choices[0].message.content, legacy completions: choices[0].text
+        GetNameValue<?> choices = input.get("choices");
+        if (choices instanceof NVGenericMapList) {
+            List<NVGenericMap> list = ((NVGenericMapList) choices).getValue();
+            if (!list.isEmpty()) {
+                NVGenericMap first = list.get(0);
+                GetNameValue<?> message = first.get("message");
+                if (message instanceof NVGenericMap) {
+                    String content = ((NVGenericMap) message).decodedValue("content", DataDecoder.AsStringOrNull);
+                    return content != null ? content : (((NVGenericMap) message).decodedValue("refusal", DataDecoder.AsStringOrNull));
+                }
+                return first.decodedValue("text", DataDecoder.AsStringOrNull);
+            }
+        }
+
+        // responses api: output[] typed items (message/reasoning/function_call/...);
+        // assistant text is the message items' content[] output_text parts
+        GetNameValue<?> output = input.get("output");
+        if (output instanceof NVGenericMapList) {
+            StringBuilder sb = new StringBuilder();
+            for (NVGenericMap item : ((NVGenericMapList) output).getValue()) {
+                if (!"message".equals(item.getValue("type")))
+                    continue;
+                GetNameValue<?> content = item.get("content");
+                if (content instanceof NVGenericMapList) {
+                    for (NVGenericMap part : ((NVGenericMapList) content).getValue()) {
+                        String text = null;
+                        if ("output_text".equals(part.decodedValue("type", DataDecoder.AsStringOrNull)))
+                            text = part.decodedValue("text", DataDecoder.AsStringOrNull);
+                        else if ("refusal".equals(part.decodedValue("type", DataDecoder.AsStringOrNull)))
+                            text = part.decodedValue("refusal", DataDecoder.AsStringOrNull);
+
+                        if (text != null) {
+                            if (sb.length() > 0)
+                                sb.append("\n\n");
+                            sb.append(text);
+                        }
+                    }
+                }
+            }
+            if (sb.length() > 0)
+                return sb.toString();
+        }
+
+        // output_text is an SDK convenience helper, not part of the raw json:
+        // honored last in case the caller pre-flattened the response
+        String outputText = input.decodedValue("output_text", DataDecoder.AsStringOrNull);
+        if (outputText != null)
+            return outputText;
+
+        // last resort: top level content/text
+        String content = input.decodedValue("content", DataDecoder.AsStringOrNull);
+        return content != null ? content : input.decodedValue("text", DataDecoder.AsStringOrNull);
+    };
+
     protected AIAPI(String name, String description) {
         super(name, description);
     }
 
 
     public String transcribe(File file) throws IOException {
-        return transcribe(new FileInputStream(file), file.getName());
+        return transcribe(Files.newInputStream(file.toPath()), file.getName());
     }
 
     /**
