@@ -32,7 +32,7 @@ public class AIAPI
         if (error instanceof NVGenericMap) {
             String message = ((NVGenericMap) error).decodedValue("message", DataDecoder.AsStringOrNull);
             return "> **Error:** " + (message != null ? message
-                    : "`" + GSONUtil.toJSONDefault(error) + "`");
+                    : "`` " + GSONUtil.toJSONDefault(error) + " ``");
         }
 
         // chat completions: choices[0].message.content, legacy completions: choices[0].text
