@@ -172,13 +172,34 @@ public class AIAPI
     }
 
 
-    private static String parseCompletionResponse(NVGenericMap response) {
+    /**
+     * Parse a chat/completions response and extract the first choice message content
+     * @param response the decoded api response
+     * @return the content text, the refusal text if the content is null, null if neither is set
+     * @throws IOException if the response is an api error or has no choices
+     */
+    private static String parseCompletionResponse(NVGenericMap response) throws IOException {
+        NVGenericMap error = response.getNV("error");
+        if (error != null)
+            throw new IOException("API error: " + error.getValue("message"));
+
         NVGenericMapList choices = (NVGenericMapList) response.get("choices");
-        if (log.isEnabled()) log.getLogger().info("" + choices);
+        if (choices == null || choices.getValue().isEmpty())
+            throw new IOException("API response has no choices: " + response);
+
         NVGenericMap firstChoice = choices.getValue().get(0);
         if (log.isEnabled()) log.getLogger().info("" + firstChoice);
         NVGenericMap message = (NVGenericMap) firstChoice.get("message");
+        if (message == null)
+            throw new IOException("API response choice has no message: " + firstChoice);
+
+        String finishReason = firstChoice.getValue("finish_reason");
+        if (finishReason != null && !"stop".equals(finishReason))
+            log.getLogger().warning("finish_reason: " + finishReason);
+
         Object content = message.getValue("content");
+        if (content == null)
+            return message.getValue("refusal");
         return "" + content;
     }
 
