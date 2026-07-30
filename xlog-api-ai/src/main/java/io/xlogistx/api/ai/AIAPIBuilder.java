@@ -330,26 +330,29 @@ public class AIAPIBuilder
     }
 
 
-    public NVGenericMap toPromptParams(String gptModel, String prompt, int maxTokens) {
-        return toVisionParams(gptModel, prompt, maxTokens, (UByteArrayOutputStream) null, null);
+    public NVGenericMap toPromptParams(String aiModel, String prompt, int maxTokens) {
+        return toVisionParams(aiModel, prompt, maxTokens, (UByteArrayOutputStream) null, null);
     }
 
 
-    public NVGenericMap toVisionParams(String gptModel, String prompt, int maxTokens, UByteArrayOutputStream image, String imageType) {
-        NVGenericMap ret = new NVGenericMap()
-                .build("model", gptModel)
-                .build("prompt", prompt)
-                .build(new NVInt("max-tokens", maxTokens));
-
-        if (image != null)
-            ret.build(new NamedValue<UByteArrayOutputStream>("image", image)).build("image-type", imageType);
-
-        return ret;
+    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, UByteArrayOutputStream image, String imageType) {
+        return toVisionParams(aiModel, prompt, maxTokens, image != null ? image.toByteArrayInputStream() : null, imageType);
+//        SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
+//        NVGenericMap ret = new NVGenericMap()
+//                .build("model", aiModel)
+//                .build("prompt", prompt)
+//                .build(new NVInt("max-tokens", maxTokens));
+//
+//        if (image != null)
+//            ret.build(new NamedValue<UByteArrayOutputStream>("image", image)).build("image-type", imageType);
+//
+//        return ret;
     }
 
-    public NVGenericMap toVisionParams(String gptModel, String prompt, int maxTokens, InputStream image, String imageType) {
+    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, InputStream image, String imageType) {
+        SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
         NVGenericMap ret = new NVGenericMap()
-                .build("model", gptModel)
+                .build("model", aiModel)
                 .build("prompt", prompt)
                 .build(new NVInt("max-tokens", maxTokens));
 
