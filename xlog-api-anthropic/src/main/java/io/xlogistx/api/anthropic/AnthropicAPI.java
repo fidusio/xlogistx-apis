@@ -340,13 +340,13 @@ public class AnthropicAPI
     // Proxy routing: NVGenericMap front end -> anthropic-java SDK back end
     // ------------------------------------------------------------------
 
-    @Override
-    public <I, O> O syncCall(GetName command, I param) throws IOException {
+
+    public <I, O> O syncCall(GetName command,  I param) throws IOException {
         return syncCall(command != null ? command.getName() : null, param);
     }
 
     @SuppressWarnings("unchecked")
-    @Override
+
     public <I, O> O syncCall(String command, I param) throws IOException {
         AnthropicAPIBuilder.Command apiCommand = SharedUtil.lookupEnum(command, AnthropicAPIBuilder.Command.values());
         if (apiCommand != null && param instanceof NVGenericMap) {
@@ -386,7 +386,7 @@ public class AnthropicAPI
             }
         }
         // not an SDK-proxied command, fall back to the generic HTTP endpoint path
-        return super.syncCall(command, param);
+        return super.syncCall(command, null, param);
     }
 
     // ------------------------------------------------------------------

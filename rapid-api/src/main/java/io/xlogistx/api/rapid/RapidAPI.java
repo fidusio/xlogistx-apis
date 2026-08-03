@@ -20,7 +20,7 @@ public class RapidAPI
     }
 
     public NVGenericMap checkEmail(String email) throws IOException {
-        return syncCall(RapidAPIBuilder.Command.VALIDATE_EMAIL, GetNameValue.create("email", email));
+        return syncCall(RapidAPIBuilder.Command.VALIDATE_EMAIL, null, GetNameValue.create("email", email));
     }
 
     public static void main(String... args) {

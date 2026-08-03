@@ -27,11 +27,11 @@ public class ApacheJames {
                     NVGenericMap userData = new NVGenericMap()
                             .build("email", params.stringValue("email"))
                             .build("password", params.stringValue("password"));
-                    byte[] userResult = apiCaller.syncCall(command, userData);
+                    byte[] userResult = apiCaller.syncCall(command, null, userData);
                     response = Arrays.toString(userResult) + " " + params.stringValue("email");
                     break;
                 case GET_USERS:
-                    NVGenericMap[] getUsersResult = apiCaller.syncCall(command, null);
+                    NVGenericMap[] getUsersResult = apiCaller.syncCall(command, null,  null);
                     if (domain != null) {
                         NVStringList matching = new NVStringList();
                         for (NVGenericMap user : getUsersResult) {
@@ -46,19 +46,19 @@ public class ApacheJames {
                         response = GSONUtil.toJSONDefault(getUsersResult, true);
                     break;
                 case DELETE_USER:
-                    byte[] deleteUserResult = apiCaller.syncCall(command, params.stringValue("email"));
+                    byte[] deleteUserResult = apiCaller.syncCall(command, null, params.stringValue("email"));
                     response = Arrays.toString(deleteUserResult);
                     break;
                 case ADD_DOMAIN:
-                    byte[] addDomainResult = apiCaller.syncCall(command, params.stringValue("domain"));
+                    byte[] addDomainResult = apiCaller.syncCall(command, null, params.stringValue("domain"));
                     response = Arrays.toString(addDomainResult);
                     break;
                 case GET_DOMAINS:
-                    String[] getDomainsResult = apiCaller.syncCall(command, null);
+                    String[] getDomainsResult = apiCaller.syncCall(command, null, null);
                     response = GSONUtil.toJSONDefault(getDomainsResult, true);
                     break;
                 case DELETE_DOMAIN:
-                    byte[] deleteDomainResult = apiCaller.syncCall(command, params.stringValue("domain"));
+                    byte[] deleteDomainResult = apiCaller.syncCall(command, null, params.stringValue("domain"));
                     response = Arrays.toString(deleteDomainResult);
                     break;
 

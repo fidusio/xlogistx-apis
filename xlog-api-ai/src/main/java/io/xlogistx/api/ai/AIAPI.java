@@ -113,7 +113,7 @@ public class AIAPI
             param.setName(name);
             param.setValue(is);
             param.getProperties().build(new NVLong("length", is.available()));
-            response = syncCall(AIAPIBuilder.Command.TRANSCRIBE, param);
+            response = syncCall(AIAPIBuilder.Command.TRANSCRIBE, null, param);
         } finally {
             SharedIOUtil.close(is);
         }
@@ -135,14 +135,14 @@ public class AIAPI
 
     public List<NVGenericMap> models() throws IOException {
 
-        NVGenericMap result = syncCall(AIAPIBuilder.Command.MODELS, null);
+        NVGenericMap result = syncCall(AIAPIBuilder.Command.MODELS, null, null);
         NVGenericMapList data = result.getNV("data");
         return data.getValue();
     }
 
 
     public NVGenericMap model(String model) throws IOException {
-        return syncCall(AIAPIBuilder.Command.MODELS, model);
+        return syncCall(AIAPIBuilder.Command.MODELS, null, model);
     }
 
     /**
@@ -156,7 +156,7 @@ public class AIAPI
      * @throws IOException in case of api error
      */
     public String visionCompletion(String aiModel, String prompt, int maxTokens, InputStream is, String imageType) throws IOException {
-        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, is, imageType)));
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, null, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, is, imageType)));
     }
 
     /**
@@ -170,7 +170,7 @@ public class AIAPI
      * @throws IOException in case of api error
      */
     public String visionCompletion(String aiModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType) throws IOException {
-        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, baos, imageType)));
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, null, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, baos, imageType)));
     }
 
     /**
@@ -182,7 +182,7 @@ public class AIAPI
      * @throws IOException in case of api error
      */
     public String completion(String aiModel, String prompt, int maxTokens) throws IOException {
-        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toPromptParams(aiModel, prompt, maxTokens)));
+        return parseCompletionResponse(syncCall(AIAPIBuilder.Command.COMPLETION, null, AIAPIBuilder.SINGLETON.toPromptParams(aiModel, prompt, maxTokens)));
     }
 
     /**
@@ -242,7 +242,7 @@ public class AIAPI
      * @return the pending http callback
      */
     public HTTPCallback<NVGenericMap, NVGenericMap> asyncCompletion(String aiModel, String prompt, int maxTokens, ConsumerCallback<NVGenericMap> callback) {
-        return asyncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toPromptParams(aiModel, prompt, maxTokens), callback);
+        return asyncCall(AIAPIBuilder.Command.COMPLETION, null, AIAPIBuilder.SINGLETON.toPromptParams(aiModel, prompt, maxTokens), callback);
     }
 
     /**
@@ -269,7 +269,7 @@ public class AIAPI
      * @return the pending http callback
      */
     public HTTPCallback<NVGenericMap, NVGenericMap> asyncVisionCompletion(String aiModel, String prompt, int maxTokens, UByteArrayOutputStream baos, String imageType, ConsumerCallback<NVGenericMap> callback) {
-        return asyncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, baos, imageType), callback);
+        return asyncCall(AIAPIBuilder.Command.COMPLETION, null, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, baos, imageType), callback);
     }
 
     /**
@@ -283,7 +283,7 @@ public class AIAPI
      * @return the pending http callback
      */
     public HTTPCallback<NVGenericMap, NVGenericMap> asyncVisionCompletion(String aiModel, String prompt, int maxTokens, InputStream is, String imageType, ConsumerCallback<NVGenericMap> callback) {
-        return asyncCall(AIAPIBuilder.Command.COMPLETION, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, is, imageType), callback);
+        return asyncCall(AIAPIBuilder.Command.COMPLETION, null, AIAPIBuilder.SINGLETON.toVisionParams(aiModel, prompt, maxTokens, is, imageType), callback);
     }
 
     /**
@@ -371,7 +371,7 @@ public class AIAPI
                     } else
                         completion = AIAPIBuilder.SINGLETON.toPromptParams(gptModel, prompt, 0);
 
-                    response = apiCaller.syncCall(command, completion);
+                    response = apiCaller.syncCall(command, null, completion);
                     System.out.println(command + "\n" + response);
 
                     break;

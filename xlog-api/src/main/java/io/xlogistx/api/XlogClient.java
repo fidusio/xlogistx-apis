@@ -27,13 +27,13 @@ public class XlogClient
 
     public long timestamp()
             throws IOException {
-        NVGenericMap nvgm = syncCall(XlogAPIBuilder.Command.TIMESTAMP, null);
+        NVGenericMap nvgm = syncCall(XlogAPIBuilder.Command.TIMESTAMP, null, null);
         return nvgm.getValue("current_time");
     }
 
     public NVGenericMap ping(boolean detailed)
             throws IOException {
-        return syncCall(XlogAPIBuilder.Command.PING, detailed);
+        return syncCall(XlogAPIBuilder.Command.PING, null, detailed);
     }
 
 
@@ -94,11 +94,11 @@ public class XlogClient
             Runnable toRun = null;
             switch (command) {
                 case TIMESTAMP:
-                    toRun = () -> apiCaller.asyncCall(command, null, callback);
+                    toRun = () -> apiCaller.asyncCall(command, null, null, callback);
 
                     break;
                 case PING:
-                    toRun = () -> apiCaller.asyncCall(command, detailed, callback);
+                    toRun = () -> apiCaller.asyncCall(command, null, detailed, callback);
                     break;
             }
 
