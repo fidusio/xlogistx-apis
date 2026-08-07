@@ -3,6 +3,8 @@ package io.xlogistx.api.ai;
 import org.zoxweb.server.http.HTTPAPIBuilder;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
 import org.zoxweb.server.http.HTTPAPIManager;
+import org.zoxweb.server.io.IOUtil;
+import org.zoxweb.server.io.UByteArrayInputStream;
 import org.zoxweb.server.io.UByteArrayOutputStream;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.util.GSONUtil;
@@ -11,7 +13,6 @@ import org.zoxweb.shared.io.SharedIOUtil;
 import org.zoxweb.shared.util.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -221,25 +222,25 @@ public class AIAPIBuilder
         completionEndPoint.setDataEncoder((hmci, param) ->
         {
             try {
-                Object imageValue = param.getValue("image");
-                byte[] imageBuffer = null;
-                int imageOffset = 0;
-                int imageLength = -1;
-
-                if (imageValue instanceof UByteArrayOutputStream) {
-                    imageBuffer = ((UByteArrayOutputStream) imageValue).getInternalBuffer();
-                    imageLength = ((UByteArrayOutputStream) imageValue).size();
-                } else if (imageValue instanceof InputStream) {
-                    imageBuffer = new byte[((InputStream) imageValue).available()];
-                    imageLength = ((InputStream) imageValue).read(imageBuffer);
-                    SharedIOUtil.close((Closeable) imageValue);
-                }
-
-
-                String imageBase64 = imageBuffer != null ? SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
-                        imageBuffer,
-                        imageOffset,
-                        imageLength) : null;
+//                Object imageValue = param.getValue("images");
+//                byte[] imageBuffer = null;
+//                int imageOffset = 0;
+//                int imageLength = -1;
+//
+//                if (imageValue instanceof UByteArrayOutputStream) {
+//                    imageBuffer = ((UByteArrayOutputStream) imageValue).getInternalBuffer();
+//                    imageLength = ((UByteArrayOutputStream) imageValue).size();
+//                } else if (imageValue instanceof InputStream) {
+//                    imageBuffer = new byte[((InputStream) imageValue).available()];
+//                    imageLength = ((InputStream) imageValue).read(imageBuffer);
+//                    SharedIOUtil.close((Closeable) imageValue);
+//                }
+//
+//
+//                String imageBase64 = imageBuffer != null ? SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
+//                        imageBuffer,
+//                        imageOffset,
+//                        imageLength) : null;
 
                 NVGenericMap requestContent = new NVGenericMap();
                 requestContent.build("model", param.getValue("model"));
@@ -253,12 +254,40 @@ public class AIAPIBuilder
                 content.add(new NVGenericMap().build("type", "text")
                         .build("text", param.getValue("prompt")));
 
-                if (SUS.isNotEmpty(imageBase64))
-                    content.add(new NVGenericMap().build("type", "image_url")
-                            .build(new NVGenericMap("image_url")
+                InputStream[] images = param.getValue("images");
+
+                if (SUS.isNotEmpty(images)) {
+                    for (InputStream imageIS : images) {
+                        byte[] imageBuffer;
+                        int imageLength;
+                        if(!(imageIS instanceof ByteArrayInputStream)) {
+                            UByteArrayOutputStream temp = IOUtil.inputStreamToByteArray(imageIS, false);
+                            imageBuffer = temp.getInternalBuffer();
+                            imageLength = temp.size();
+                        }
+                        else {
+                            imageBuffer = new byte[imageIS.available()];
+                            imageLength = imageIS.read(imageBuffer);
+                        }
+                        SharedIOUtil.close(imageIS);
+
+                        if(imageLength < 1)
+                            continue;
+
+                        String imageBase64 = SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
+                                imageBuffer,
+                                0,
+                                imageLength);
+
+
+                            content.add(new NVGenericMap().build("type", "image_url")
+                                    .build(new NVGenericMap("image_url")
 //                                    .build("url", "data:image/" + param.getValue("image-type") + ";base64,<" + imageBase64 + ">")
-                                    .build("url", "data:image/" + param.getValue("image-type") + ";base64," + imageBase64)
-                                    .build("detail", "high")));
+                                            .build("url", "data:image/" + param.getValue("image-type") + ";base64," + imageBase64)
+                                            .build("detail", "high")));
+
+                    }
+                }
 
 
 //                NVInt maxTokens = (NVInt) param.get("max-tokens");
@@ -281,6 +310,8 @@ public class AIAPIBuilder
         });
         HTTPAPIManager.SINGLETON.register(completionEndPoint);
     }
+
+
 
 
     private void buildTextToSpeechEndPoint() {
@@ -331,12 +362,26 @@ public class AIAPIBuilder
 
 
     public NVGenericMap toPromptParams(String aiModel, String prompt, int maxTokens) {
-        return toVisionParams(aiModel, prompt, maxTokens, (UByteArrayOutputStream) null, null);
+        return toVisionParams(aiModel, prompt, maxTokens, null, (InputStream[]) null);
     }
 
 
-    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, UByteArrayOutputStream image, String imageType) {
-        return toVisionParams(aiModel, prompt, maxTokens, image != null ? image.toByteArrayInputStream() : null, imageType);
+//    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, UByteArrayOutputStream image, String imageType) {
+//        return toVisionParams(aiModel, prompt, maxTokens, image != null ? image.toByteArrayInputStream() : null, imageType);
+
+    ////        SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
+    ////        NVGenericMap ret = new NVGenericMap()
+    ////                .build("model", aiModel)
+    ////                .build("prompt", prompt)
+    ////                .build(new NVInt("max-tokens", maxTokens));
+    ////
+    ////        if (image != null)
+    ////            ret.build(new NamedValue<UByteArrayOutputStream>("image", image)).build("image-type", imageType);
+    ////
+    ////        return ret;
+//    }
+//
+//    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, InputStream image, String imageType) {
 //        SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
 //        NVGenericMap ret = new NVGenericMap()
 //                .build("model", aiModel)
@@ -344,20 +389,33 @@ public class AIAPIBuilder
 //                .build(new NVInt("max-tokens", maxTokens));
 //
 //        if (image != null)
-//            ret.build(new NamedValue<UByteArrayOutputStream>("image", image)).build("image-type", imageType);
+//            ret.build(new NamedValue<InputStream>("image", image)).build("image-type", imageType);
 //
 //        return ret;
+//    }
+    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, String imageType, UByteArrayOutputStream... ubaos) {
+        SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
+
+        InputStream[] images = null;
+        if (ubaos != null && ubaos.length > 0) {
+            images = new UByteArrayInputStream[ubaos.length];
+            for (int i = 0; i < images.length; i++)
+                images[i] = ubaos[i].toByteArrayInputStream();
+        }
+
+        return toVisionParams(aiModel, prompt, maxTokens, imageType, images);
     }
 
-    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, InputStream image, String imageType) {
+
+    public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, String imageType, InputStream... images) {
         SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
         NVGenericMap ret = new NVGenericMap()
                 .build("model", aiModel)
                 .build("prompt", prompt)
                 .build(new NVInt("max-tokens", maxTokens));
 
-        if (image != null)
-            ret.build(new NamedValue<InputStream>("image", image)).build("image-type", imageType);
+        if (images != null && images.length > 0)
+            ret.build(new NamedValue<InputStream[]>("images", images)).build("image-type", imageType);
 
         return ret;
     }
@@ -369,7 +427,7 @@ public class AIAPIBuilder
 
     public static AIAPI createAIAPI(AIAPIType aiType, String name, String aiAPIKey) {
         SUS.checkIfNull("aiType", aiType);
-        AIAPI ret = AIAPIBuilder.SINGLETON.createAPI( name != null ? name : aiType.getName() , null, HTTPAPIBuilder.Prop.toProp(aiType.getURL(), HTTPAuthorization.createBearer(aiAPIKey)));
+        AIAPI ret = AIAPIBuilder.SINGLETON.createAPI(name != null ? name : aiType.getName(), null, HTTPAPIBuilder.Prop.toProp(aiType.getURL(), HTTPAuthorization.createBearer(aiAPIKey)));
         if (aiType == AIAPIType.ANTHROPIC) {
             ret.lookupEndPoint(Command.MODELS.getName()).setAuthorizationEncoder(ANTHROPIC_AUTHORIZATION);
         }
