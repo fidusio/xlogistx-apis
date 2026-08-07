@@ -15,6 +15,7 @@ import org.zoxweb.shared.util.*;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 
 public class AIAPIBuilder
@@ -258,33 +259,45 @@ public class AIAPIBuilder
 
                 if (SUS.isNotEmpty(images)) {
                     for (InputStream imageIS : images) {
-                        byte[] imageBuffer;
+                        byte[] imageBuffer = null;
                         int imageLength;
-                        if(!(imageIS instanceof ByteArrayInputStream)) {
+                        String imageBase64 = null;
+
+                        if(imageIS instanceof UByteArrayInputStream) {
+                            imageLength = imageIS.available();
+                            if(imageLength > 0) {
+                                ByteBuffer bb = ((UByteArrayInputStream) imageIS).wrap();
+                                imageBase64 = SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
+                                        bb.array(), bb.position(), bb.remaining());
+                            }
+
+                        }
+                        else if (!(imageIS instanceof ByteArrayInputStream)) {
                             UByteArrayOutputStream temp = IOUtil.inputStreamToByteArray(imageIS, false);
                             imageBuffer = temp.getInternalBuffer();
                             imageLength = temp.size();
-                        }
-                        else {
+                        } else {
                             imageBuffer = new byte[imageIS.available()];
                             imageLength = imageIS.read(imageBuffer);
                         }
                         SharedIOUtil.close(imageIS);
 
-                        if(imageLength < 1)
+                        if (imageLength < 1)
                             continue;
 
-                        String imageBase64 = SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
-                                imageBuffer,
-                                0,
-                                imageLength);
+                        if(imageBase64 == null) {
+                            imageBase64 = SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
+                                    imageBuffer,
+                                    0,
+                                    imageLength);
+                        }
 
 
-                            content.add(new NVGenericMap().build("type", "image_url")
-                                    .build(new NVGenericMap("image_url")
+                        content.add(new NVGenericMap().build("type", "image_url")
+                                .build(new NVGenericMap("image_url")
 //                                    .build("url", "data:image/" + param.getValue("image-type") + ";base64,<" + imageBase64 + ">")
-                                            .build("url", "data:image/" + param.getValue("image-type") + ";base64," + imageBase64)
-                                            .build("detail", "high")));
+                                        .build("url", "data:image/" + param.getValue("image-type") + ";base64," + imageBase64)
+                                        .build("detail", "high")));
 
                     }
                 }
@@ -310,8 +323,6 @@ public class AIAPIBuilder
         });
         HTTPAPIManager.SINGLETON.register(completionEndPoint);
     }
-
-
 
 
     private void buildTextToSpeechEndPoint() {
