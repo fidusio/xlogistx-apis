@@ -223,25 +223,6 @@ public class AIAPIBuilder
         completionEndPoint.setDataEncoder((hmci, param) ->
         {
             try {
-//                Object imageValue = param.getValue("images");
-//                byte[] imageBuffer = null;
-//                int imageOffset = 0;
-//                int imageLength = -1;
-//
-//                if (imageValue instanceof UByteArrayOutputStream) {
-//                    imageBuffer = ((UByteArrayOutputStream) imageValue).getInternalBuffer();
-//                    imageLength = ((UByteArrayOutputStream) imageValue).size();
-//                } else if (imageValue instanceof InputStream) {
-//                    imageBuffer = new byte[((InputStream) imageValue).available()];
-//                    imageLength = ((InputStream) imageValue).read(imageBuffer);
-//                    SharedIOUtil.close((Closeable) imageValue);
-//                }
-//
-//
-//                String imageBase64 = imageBuffer != null ? SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
-//                        imageBuffer,
-//                        imageOffset,
-//                        imageLength) : null;
 
                 NVGenericMap requestContent = new NVGenericMap();
                 requestContent.build("model", param.getValue("model"));
@@ -259,46 +240,51 @@ public class AIAPIBuilder
 
                 if (SUS.isNotEmpty(images)) {
                     for (InputStream imageIS : images) {
-                        byte[] imageBuffer = null;
-                        int imageLength;
-                        String imageBase64 = null;
+                        if (imageIS != null) {
+                            byte[] imageBuffer = null;
+                            int imageLength;
+                            String imageBase64 = null;
 
-                        if(imageIS instanceof UByteArrayInputStream) {
-                            imageLength = imageIS.available();
-                            if(imageLength > 0) {
-                                ByteBuffer bb = ((UByteArrayInputStream) imageIS).wrap();
+                            if (imageIS instanceof ByteArrayInputStream) {
+                                // fixed the logic and simplified the code
+                                imageLength = imageIS.available();
+                                if (imageLength > 0) {
+                                    if (imageIS instanceof UByteArrayInputStream) {
+                                        ByteBuffer bb = ((UByteArrayInputStream) imageIS).wrap();
+                                        imageBase64 = SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
+                                                bb.array(), bb.position(), bb.remaining());
+                                    } else {
+                                        imageBuffer = new byte[imageLength];
+                                        if (imageIS.read(imageBuffer) != imageLength) {
+                                            log.getLogger().warning("Error reading image data");
+                                        }
+                                    }
+                                }
+
+                            } else {
+                                UByteArrayOutputStream temp = IOUtil.inputStreamToByteArray(imageIS, false);
+                                imageBuffer = temp.getInternalBuffer();
+                                imageLength = temp.size();
+                            }
+                            SharedIOUtil.close(imageIS);
+
+                            if (imageLength < 1)
+                                continue;
+
+                            if (imageBase64 == null) {
                                 imageBase64 = SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
-                                        bb.array(), bb.position(), bb.remaining());
+                                        imageBuffer,
+                                        0,
+                                        imageLength);
                             }
 
+
+                            content.add(new NVGenericMap().build("type", "image_url")
+                                    .build(new NVGenericMap("image_url")
+                                            .build("url", "data:image/" + param.getValue("image-type") + ";base64," + imageBase64)
+                                            .build("detail", "high")));
+
                         }
-                        else if (!(imageIS instanceof ByteArrayInputStream)) {
-                            UByteArrayOutputStream temp = IOUtil.inputStreamToByteArray(imageIS, false);
-                            imageBuffer = temp.getInternalBuffer();
-                            imageLength = temp.size();
-                        } else {
-                            imageBuffer = new byte[imageIS.available()];
-                            imageLength = imageIS.read(imageBuffer);
-                        }
-                        SharedIOUtil.close(imageIS);
-
-                        if (imageLength < 1)
-                            continue;
-
-                        if(imageBase64 == null) {
-                            imageBase64 = SharedBase64.encodeAsString(SharedBase64.Base64Type.DEFAULT,
-                                    imageBuffer,
-                                    0,
-                                    imageLength);
-                        }
-
-
-                        content.add(new NVGenericMap().build("type", "image_url")
-                                .build(new NVGenericMap("image_url")
-//                                    .build("url", "data:image/" + param.getValue("image-type") + ";base64,<" + imageBase64 + ">")
-                                        .build("url", "data:image/" + param.getValue("image-type") + ";base64," + imageBase64)
-                                        .build("detail", "high")));
-
                     }
                 }
 
