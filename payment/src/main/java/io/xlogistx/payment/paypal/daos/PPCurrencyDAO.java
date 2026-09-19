@@ -33,7 +33,7 @@ public class PPCurrencyDAO
             false,
             false,
             PPCurrencyDAO.class,
-            SharedUtil.extractNVConfigs(Params.values()),
+            SUS.extractNVConfigs(Params.values()),
             null,
             false,
             SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO

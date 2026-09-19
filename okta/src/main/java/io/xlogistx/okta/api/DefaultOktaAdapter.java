@@ -7,7 +7,7 @@ import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.*;
 import org.zoxweb.shared.util.GetNameValue;
 import org.zoxweb.shared.util.NVGenericMap;
-import org.zoxweb.shared.util.SharedStringUtil;
+import org.zoxweb.shared.util.SUS;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -76,7 +76,7 @@ public class DefaultOktaAdapter
         return send(hmci, DefaultOktaUser.class);
 
 
-//        SharedUtil.checkIfNulls("User can't be null", user, user.getOktaProfile(), user.getOktaProfile().getEmail(), user.getOktaProfile().getUserName());
+//        SUS.checkIfNulls("User can't be null", user, user.getOktaProfile(), user.getOktaProfile().getEmail(), user.getOktaProfile().getUserName());
 //        Map<String, Object> prop = new HashMap<String, Object>();
 //        prop.put("uuid", UUID.randomUUID().toString());
 //        prop.put("division", "tank");
@@ -121,7 +121,7 @@ public class DefaultOktaAdapter
 
         if (oktaUser.getStatus() != OktaUser.OktaUserStatus.DEPROVISIONED) {
             HTTPMessageConfigInterface hmciDeactivate = HTTPMessageConfig.createAndInit(getURL(),
-                    SharedStringUtil.embedText(URIs.USER_DEACTIVATE.getValue(), Token.USERID.getValue(), oktaUser.getOktaId()), HTTPMethod.POST);
+                    SUS.embedText(URIs.USER_DEACTIVATE.getValue(), Token.USERID.getValue(), oktaUser.getOktaId()), HTTPMethod.POST);
             hmciDeactivate.setContentType("application/json");
             hmciDeactivate.setAccept("application/json");
             hmciDeactivate.setAuthorization(getHTTPAuthorization());
@@ -131,7 +131,7 @@ public class DefaultOktaAdapter
 
 
         HTTPMessageConfigInterface hmciDelete = HTTPMessageConfig.createAndInit(getURL(),
-                SharedStringUtil.embedText(URIs.USER_DELETE.getValue(), Token.USERID.getValue(), oktaUser.getOktaId()), HTTPMethod.DELETE);
+                SUS.embedText(URIs.USER_DELETE.getValue(), Token.USERID.getValue(), oktaUser.getOktaId()), HTTPMethod.DELETE);
         hmciDelete.setContentType("application/json");
         hmciDelete.setAccept("application/json");
         hmciDelete.setAuthorization(getHTTPAuthorization());
@@ -191,7 +191,7 @@ public class DefaultOktaAdapter
 
     @Override
     public OktaUser userUpdatePassword(String userName, String oldPassword, String newPassword) throws IOException {
-        String uri = SharedStringUtil.embedText(URIs.USER_CHANGE_PASSWORD.getValue(), Token.USERID, userName);
+        String uri = SUS.embedText(URIs.USER_CHANGE_PASSWORD.getValue(), Token.USERID, userName);
         HTTPMessageConfigInterface hmci = HTTPMessageConfig.createAndInit(url, uri, HTTPMethod.POST);
         hmci.setContentType("application/json");
         hmci.setAccept("application/json");

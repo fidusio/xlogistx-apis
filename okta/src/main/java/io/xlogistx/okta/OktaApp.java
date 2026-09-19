@@ -80,7 +80,7 @@ public class OktaApp {
             //String search = params.stringValue("search", null, true);
             String group = params.stringValue("group", null, true);
             boolean deleteGroupUsers = params.booleanValue("deleteGroupUsers", true);
-            String[] groups = (params.stringValue("groups", null, true) != null) ? SharedStringUtil.parseString(params.stringValue("groups", null, true), ",", true) : null;
+            String[] groups = (params.stringValue("groups", null, true) != null) ? SUS.parseString(params.stringValue("groups", null, true), ",", true) : null;
 
 //            TaskUtil.setMaxTasksQueue(2000);
             if (threadCount > 0)
@@ -292,7 +292,7 @@ public class OktaApp {
                                             OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                         } catch (Exception e) {
 
-                                            log.info("************FAILED DELETE******* for ser " + SharedUtil.toCanonicalID(',', user.getOktaProfile().getUserName(), user.getStatus()) + " available threads " +
+                                            log.info("************FAILED DELETE******* for ser " + SUS.toCanonicalID(',', user.getOktaProfile().getUserName(), user.getStatus()) + " available threads " +
                                                     TaskUtil.info());
                                             log.info("API RATE: " + oktaAdapter.getCurrentAPIRate());
                                             OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.FAILED).register(0, 1);
@@ -344,7 +344,7 @@ public class OktaApp {
                                     OktaUser oktafied = oktaAdapter.registerUser(oktaUser, active, groups);
                                     if (oktafied != null && val % 200 == 0)
                                         log.info("GENUSERS OktaFiedUser : " +
-                                                SharedUtil.toCanonicalID(',', oktafied.getOktaProfile().getUserName(), oktafied.getOktaId()) + "\n" + TaskUtil.info());
+                                                SUS.toCanonicalID(',', oktafied.getOktaProfile().getUserName(), oktafied.getOktaId()) + "\n" + TaskUtil.info());
 
                                     OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                 } catch (Exception e) {
@@ -359,11 +359,11 @@ public class OktaApp {
                                     OktaUser oktafied = oktaAdapter.registerUser(oktaUser, active, groups);
                                     if (oktafied != null)
                                         log.info("GENUSERS OktaFiedUser : " +
-                                                SharedUtil.toCanonicalID(',', oktafied.getOktaProfile().getUserName(), oktafied.getOktaId()) + "\n" + TaskUtil.info());
+                                                SUS.toCanonicalID(',', oktafied.getOktaProfile().getUserName(), oktafied.getOktaId()) + "\n" + TaskUtil.info());
                                     OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
                                 } catch (Exception e) {
                                     OktaCache.SINGLETON.rateCounter(OktaCache.RateCount.SUCCESS).register(0, 1);
-                                    log.info("************FAILED GENUSERS******* for  " + SharedUtil.toCanonicalID(',', oktaUser.getOktaProfile().getUserName()) + " available threads " +
+                                    log.info("************FAILED GENUSERS******* for  " + SUS.toCanonicalID(',', oktaUser.getOktaProfile().getUserName()) + " available threads " +
                                             TaskUtil.info() + " API RATE: " + oktaAdapter.getCurrentAPIRate());
                                     e.printStackTrace();
                                 }

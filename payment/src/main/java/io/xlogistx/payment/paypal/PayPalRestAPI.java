@@ -7,7 +7,7 @@ import org.zoxweb.shared.http.*;
 import org.zoxweb.shared.util.Const;
 import org.zoxweb.shared.util.NVEntity;
 import org.zoxweb.shared.util.NVPair;
-import org.zoxweb.shared.util.SharedStringUtil;
+import org.zoxweb.shared.util.SUS;
 
 import io.xlogistx.payment.paypal.daos.PPAmountDAO;
 import io.xlogistx.payment.paypal.daos.PPPaymentDAO;
@@ -32,7 +32,7 @@ public class PayPalRestAPI {
         hcc.getParameters().add(new NVPair("grant_type", "client_credentials"));
         HTTPCall hc = new HTTPCall(hcc, null);
         HTTPResponseData rd = hc.sendRequest();
-        APITokenDAO ret = GSONUtil.fromJSON(SharedStringUtil.toString(rd.getData()), APITokenDAO.class);
+        APITokenDAO ret = GSONUtil.fromJSON(SUS.toString(rd.getData()), APITokenDAO.class);
 
         ret.setCreationTime(System.currentTimeMillis());
         ret.setLastTimeUpdated(System.currentTimeMillis());
@@ -51,13 +51,13 @@ public class PayPalRestAPI {
         //hcc.getHeaderParameters().add(HTTPAuthorizationType.BEARER.toHTTPHeader(token.getTokenType(), token.getAccessToken()));
         hcc.setAuthorization(HTTPAuthorization.createBearer(token.getAccessToken()));
         String json = GSONUtil.toJSON(payment, true, false, false);
-        hcc.setContent(SharedStringUtil.getBytes(json));
+        hcc.setContent(SUS.getBytes(json));
 
         System.out.println(GSONUtil.toJSON((NVEntity) hcc, true, false, false));
         HTTPCall hc = new HTTPCall(hcc, null);
         HTTPResponseData rd = hc.sendRequest();
 
-        PPPaymentDAO response = GSONUtil.fromJSON(SharedStringUtil.toString(rd.getData()), PPPaymentDAO.class);
+        PPPaymentDAO response = GSONUtil.fromJSON(SUS.toString(rd.getData()), PPPaymentDAO.class);
         return response;
     }
 
@@ -74,13 +74,13 @@ public class PayPalRestAPI {
         amount.setCurrency(currency);
 
         String json = GSONUtil.toJSONWrapper("amount", amount, true, false, false, null);
-        hcc.setContent(SharedStringUtil.getBytes(json));
+        hcc.setContent(SUS.getBytes(json));
 
         System.out.println(GSONUtil.toJSON((NVEntity) hcc, true, false, false));
         HTTPCall hc = new HTTPCall(hcc, null);
         HTTPResponseData rd = hc.sendRequest();
 
-        return GSONUtil.fromJSON(SharedStringUtil.toString(rd.getData()), PPRefundDAO.class);
+        return GSONUtil.fromJSON(SUS.toString(rd.getData()), PPRefundDAO.class);
     }
 
 

@@ -44,7 +44,7 @@ public class PPPayerInfoDAO
             false,
             false,
             PPPayerInfoDAO.class,
-            SharedUtil.extractNVConfigs(Params.values()),
+            SUS.extractNVConfigs(Params.values()),
             null,
             false,
             SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO

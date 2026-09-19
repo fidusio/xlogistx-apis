@@ -348,7 +348,7 @@ public class AnthropicAPI
     @SuppressWarnings("unchecked")
 
     public <I, O> O syncCall(String command, I param) throws IOException {
-        AnthropicAPIBuilder.Command apiCommand = SharedUtil.lookupEnum(command, AnthropicAPIBuilder.Command.values());
+        AnthropicAPIBuilder.Command apiCommand = SUS.lookupEnum(command, AnthropicAPIBuilder.Command.values());
         if (apiCommand != null && param instanceof NVGenericMap) {
             NVGenericMap params = (NVGenericMap) param;
             rateLimit();
@@ -505,7 +505,7 @@ public class AnthropicAPI
             for (String stopSequence : ((NVStringList) stopSequences).getValue())
                 builder.addStopSequence(stopSequence);
         } else if (stopSequences != null && stopSequences.getValue() instanceof String) {
-            for (String stopSequence : SharedStringUtil.parseString((String) stopSequences.getValue(), ",", true))
+            for (String stopSequence : SUS.parseString((String) stopSequences.getValue(), ",", true))
                 builder.addStopSequence(stopSequence);
         }
 

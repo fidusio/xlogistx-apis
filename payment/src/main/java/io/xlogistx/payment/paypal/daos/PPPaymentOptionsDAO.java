@@ -34,7 +34,7 @@ public class PPPaymentOptionsDAO
             false,
             false,
             PPPaymentOptionsDAO.class,
-            SharedUtil.extractNVConfigs(Params.values()),
+            SUS.extractNVConfigs(Params.values()),
             null,
             false,
             SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
