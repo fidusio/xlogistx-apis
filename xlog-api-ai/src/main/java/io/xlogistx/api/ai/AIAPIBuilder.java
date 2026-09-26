@@ -18,28 +18,68 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 
+/**
+ * Singleton builder of the AI HTTP API endpoints and factory of {@link AIAPI} callers.
+ * <p>
+ * On class load the {@link #SINGLETON} registers the following endpoints with
+ * {@code HTTPAPIManager} under the {@value #DOMAIN} domain, all sharing the {@link #GPT_RC}
+ * rate controller:
+ * <ul>
+ *   <li>{@link Command#COMPLETION} {@code POST chat/completions}, json payload built from the
+ *       parameter map produced by {@link #toPromptParams(String, String, int)} or
+ *       {@link #toVisionParams(String, String, int, String, InputStream...)}, images are inlined as
+ *       base64 {@code data:} urls with {@code detail=high}</li>
+ *   <li>{@link Command#TRANSCRIBE} {@code POST audio/transcriptions}, multipart upload of an
+ *       {@link InputStream}, {@link File} or file path wrapped in a {@code NamedValue}, defaults to
+ *       {@link #TRANSCRIBE_MODEL}</li>
+ *   <li>{@link Command#TEXT_TO_SPEECH} {@code POST audio/speech}, returns the raw audio bytes</li>
+ *   <li>{@link Command#MODELS} {@code GET models/{model}}, the model path parameter is optional</li>
+ * </ul>
+ * {@link Command#AUDIO_TRANSLATION} is declared but has no endpoint yet.
+ * <p>
+ * Callers are created with {@link #createAIAPI(AIAPIType, String, String)} for a known provider
+ * or {@link #createAPI(String, String, NVGenericMap)} for a custom base url.
+ */
 public class AIAPIBuilder
         implements HTTPAPIBuilder {
 
+    /**
+     * Authorization encoder for the Anthropic API: sends the token in the {@code x-api-key}
+     * header instead of a bearer token and adds the required {@code anthropic-version} header.
+     * Installed by {@link #createAIAPI(AIAPIType, String, String)} when the type is
+     * {@link AIAPIType#ANTHROPIC}.
+     */
     public static final BiDataEncoder<HTTPMessageConfigInterface, HTTPAuthorization, HTTPMessageConfigInterface> ANTHROPIC_AUTHORIZATION = (h, a) -> {
         h.setAuthorization(HTTPAuthorization.createGeneric("x-api-key", null, a.getToken()));
         h.getHeaders().build("anthropic-version", "2023-06-01");
         return h;
     };
+    /** Class logger, enabled by default. */
     public static final LogWrapper log = new LogWrapper(AIAPIBuilder.class).setEnabled(true);
 
+    /** Rate controller shared by all endpoints, 100 calls per minute. */
     public static final RateController GPT_RC = new RateController("GPT-RC", "100/m");
+    /** Domain under which the endpoints are registered with {@code HTTPAPIManager}. */
     public static final String DOMAIN = "ai-api";
+    /** Default speech to text model used by {@link Command#TRANSCRIBE}. */
     public static final String TRANSCRIBE_MODEL = "whisper-1";
 
 
     //public static final String AI_URL = "https://api.openai.com";
 
+    /**
+     * Supported AI providers, each with its OpenAI compatible base url.
+     * The name is the value expected by configuration files and the {@code ai-type} command line argument.
+     */
     public enum AIAPIType
             implements GetNameValue<String>, GetDescription {
+        /** OpenAI, https://api.openai.com/v1 */
         OPEN_AI("open-ai", "OpenAI API", "https://api.openai.com/v1"),
+        /** xAI Grok, https://api.x.ai/v1 */
         GROK("grok-ai", "Grok API", "https://api.x.ai/v1"),
+        /** Google Gemini through its OpenAI compatibility layer */
         GEMINI("gemini-ai", "Gemini API", "https://generativelanguage.googleapis.com/v1beta/openai"),
+        /** Anthropic, requires {@link AIAPIBuilder#ANTHROPIC_AUTHORIZATION} */
         ANTHROPIC("anthropic-ai", "Anthropic  API", "https://api.anthropic.com/v1"),
         ;
         private final String name;
@@ -71,26 +111,39 @@ public class AIAPIBuilder
         }
 
         /**
-         * Returns the value.
+         * Returns the base url of the provider.
          *
-         * @return typed value
+         * @return the base url, same as {@link #getURL()}
          */
         @Override
         public String getValue() {
             return url;
         }
 
+        /**
+         * @return the base url of the provider, ie: https://api.openai.com/v1
+         */
         public String getURL() {
             return getValue();
         }
     }
 
+    /**
+     * The API commands, each maps to an endpoint uri relative to the provider base url.
+     * The name is the endpoint id used with {@code HTTPAPICaller.syncCall} and {@code asyncCall},
+     * the value is the relative uri.
+     */
     public enum Command
             implements GetNameValue<String>, GetDescription {
+        /** Chat completion, text or vision, parameter map from {@link AIAPIBuilder#toVisionParams(String, String, int, String, InputStream...)} */
         COMPLETION("completion", "chat/completions", HTTPMethod.POST, "Completion endpoint"),
+        /** Speech to text, parameter is a {@code NamedValue} holding the audio stream, file or path */
         TRANSCRIBE("transcribe", "audio/transcriptions", HTTPMethod.POST, "Audio to text endpoint"),
+        /** Text to speech, returns the raw audio bytes */
         TEXT_TO_SPEECH("text-to-speech", "audio/speech", HTTPMethod.POST, "Test to audio endpoint"),
+        /** Audio translation, declared for future use, no endpoint is registered yet */
         AUDIO_TRANSLATION("audio-translation", "audio/translations", HTTPMethod.POST, "Audio translation endpoint"),
+        /** Model listing or single model lookup, parameter is the optional model id */
         MODELS("models", "models/{model}", HTTPMethod.GET, "Get the supported models endpoint"),
         ;
         private final String name;
@@ -105,6 +158,9 @@ public class AIAPIBuilder
             this.description = description;
         }
 
+        /**
+         * @return the endpoint id, ie: completion
+         */
         public String getName() {
             return name;
         }
@@ -120,21 +176,25 @@ public class AIAPIBuilder
         }
 
         /**
-         * Returns the value.
+         * Returns the endpoint uri relative to the provider base url.
          *
-         * @return typed value
+         * @return the relative uri, ie: chat/completions
          */
         @Override
         public String getValue() {
             return uri;
         }
 
+        /**
+         * @return the http method of the endpoint
+         */
         HTTPMethod getHTTPMethod() {
             return httpMethod;
         }
     }
 
 
+    /** The only instance, its creation registers all the endpoints. */
     public static final AIAPIBuilder SINGLETON = new AIAPIBuilder();
 
 
@@ -358,6 +418,14 @@ public class AIAPIBuilder
     }
 
 
+    /**
+     * Build the {@link Command#COMPLETION} parameter map for a text only prompt
+     * @param aiModel the ai model to use
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @return the parameter map with the model, prompt and max-tokens entries
+     * @throws NullPointerException if aiModel or prompt is null
+     */
     public NVGenericMap toPromptParams(String aiModel, String prompt, int maxTokens) {
         return toVisionParams(aiModel, prompt, maxTokens, null, (InputStream[]) null);
     }
@@ -390,6 +458,17 @@ public class AIAPIBuilder
 //
 //        return ret;
 //    }
+    /**
+     * Build the {@link Command#COMPLETION} parameter map for a prompt with zero or more images held in buffers.
+     * The buffers are wrapped without copying, the caller must not modify them until the call completes.
+     * @param aiModel the ai model to use
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @param imageType the image type shared by all the images ie: png, jpeg
+     * @param ubaos the image buffers, null or empty for a text only prompt
+     * @return the parameter map
+     * @throws NullPointerException if aiModel or prompt is null
+     */
     public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, String imageType, UByteArrayOutputStream... ubaos) {
         SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
 
@@ -404,6 +483,17 @@ public class AIAPIBuilder
     }
 
 
+    /**
+     * Build the {@link Command#COMPLETION} parameter map for a prompt with zero or more images.
+     * The streams are read and closed by the endpoint encoder when the call is made, empty streams are skipped.
+     * @param aiModel the ai model to use
+     * @param prompt the user prompt
+     * @param maxTokens max tokens to generate, 0 for the api default
+     * @param imageType the image type shared by all the images ie: png, jpeg
+     * @param images the image content input streams, null or empty for a text only prompt
+     * @return the parameter map with the model, prompt, max-tokens and optional images and image-type entries
+     * @throws NullPointerException if aiModel or prompt is null
+     */
     public NVGenericMap toVisionParams(String aiModel, String prompt, int maxTokens, String imageType, InputStream... images) {
         SUS.checkIfNulls("aiModel or prompt null", aiModel, prompt);
         NVGenericMap ret = new NVGenericMap()
@@ -417,11 +507,27 @@ public class AIAPIBuilder
         return ret;
     }
 
+    /**
+     * Create a caller bound to a custom base url and authorization
+     * @param name the caller name
+     * @param description the caller description
+     * @param props the caller properties, usually {@code HTTPAPIBuilder.Prop.toProp(url, authorization)}
+     * @return the caller with all the {@value #DOMAIN} endpoints bound
+     */
     public AIAPI createAPI(String name, String description, NVGenericMap props) {
         return HTTPAPIManager.SINGLETON.buildAPICaller(new AIAPI(name, description), DOMAIN, props);
     }
 
 
+    /**
+     * Create a caller for a known provider using bearer authorization,
+     * for {@link AIAPIType#ANTHROPIC} the {@link #ANTHROPIC_AUTHORIZATION} encoder is applied to the models endpoint
+     * @param aiType the provider
+     * @param name the caller name, null to use the provider name
+     * @param aiAPIKey the provider api key
+     * @return the caller
+     * @throws NullPointerException if aiType is null
+     */
     public static AIAPI createAIAPI(AIAPIType aiType, String name, String aiAPIKey) {
         SUS.checkIfNull("aiType", aiType);
         AIAPI ret = AIAPIBuilder.SINGLETON.createAPI(name != null ? name : aiType.getName(), null, HTTPAPIBuilder.Prop.toProp(aiType.getURL(), HTTPAuthorization.createBearer(aiAPIKey)));

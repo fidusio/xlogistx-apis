@@ -18,11 +18,52 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Caller for an OpenAI compatible AI HTTP API (OpenAI, Grok, Gemini, Anthropic).
+ * <p>
+ * An instance is bound to one base URL and one API key and is created through
+ * {@link AIAPIBuilder#createAIAPI(AIAPIBuilder.AIAPIType, String, String)} or
+ * {@link AIAPIBuilder#createAPI(String, String, NVGenericMap)}. It wraps the endpoints
+ * registered by {@link AIAPIBuilder} and exposes them as plain java methods:
+ * <ul>
+ *   <li>text completions, sync {@link #completion(String, String, int)} and async
+ *       {@link #asyncCompletion(String, String, int, ConsumerCallback)}, optionally merged with a
+ *       skill file via {@link #toSkillPrompt(String, String)}</li>
+ *   <li>vision completions with one or more embedded images,
+ *       {@link #visionCompletion(String, String, int, String, InputStream...)}</li>
+ *   <li>audio transcription {@link #transcribe(File)}</li>
+ *   <li>model discovery {@link #models()}, {@link #availableModels()}, {@link #model(String)}</li>
+ * </ul>
+ * The sync completion methods return the assistant text only and throw {@link IOException} on an
+ * API error. The async variants hand the raw decoded response to the callback, use
+ * {@link #AIMDDecoder} to extract markdown from it.
+ * <p>
+ * The class also has a {@link #main(String...)} entry point for command line use.
+ */
 public class AIAPI
         extends HTTPAPICaller {
+    /** Class logger, disabled by default. */
     public static final LogWrapper log = new LogWrapper(AIAPI.class);
 
 
+    /**
+     * Decodes a raw AI API response into a markdown string suitable for display.
+     * <p>
+     * It understands, in this order:
+     * <ol>
+     *   <li>an error payload {@code {"error": {"message": ...}}}, rendered as a markdown quote
+     *       prefixed with <b>Error:</b></li>
+     *   <li>chat completions, {@code choices[0].message.content} or the {@code refusal} text,
+     *       and legacy completions {@code choices[0].text}</li>
+     *   <li>the responses API, all {@code output_text} and {@code refusal} parts of the
+     *       {@code output[]} message items joined by a blank line</li>
+     *   <li>a pre flattened {@code output_text} field</li>
+     *   <li>a top level {@code content} or {@code text} field</li>
+     * </ol>
+     * Returns {@code null} for a {@code null} input or when no text could be located.
+     * Unlike {@link #parseCompletionResponse(NVGenericMap)} it never throws, which makes it
+     * safe for UI decoders.
+     */
     public static final  DataDecoder<NVGenericMap, String> AIMDDecoder = (input)-> {
         if (input == null)
             return null;
@@ -90,19 +131,31 @@ public class AIAPI
         return content != null ? content : input.decodedValue("text", DataDecoder.AsStringOrNull);
     };
 
+    /**
+     * Creates a caller, use {@link AIAPIBuilder#createAIAPI(AIAPIBuilder.AIAPIType, String, String)}
+     * or {@link AIAPIBuilder#createAPI(String, String, NVGenericMap)} which also bind the endpoints
+     * @param name the caller name
+     * @param description the caller description
+     */
     protected AIAPI(String name, String description) {
         super(name, description);
     }
 
 
+    /**
+     * Transcribe an audio file to text
+     * @param file the audio file, its name is sent as the upload file name
+     * @return text of the recording
+     * @throws IOException in case of api or file error
+     */
     public String transcribe(File file) throws IOException {
         return transcribe(Files.newInputStream(file.toPath()), file.getName());
     }
 
     /**
-     * Transcribe a text
-     * @param is input stream
-     * @param name user defined name
+     * Transcribe an audio stream to text using the {@link AIAPIBuilder#TRANSCRIBE_MODEL} model
+     * @param is the audio content input stream, always closed
+     * @param name the upload file name, the extension must match the audio format ie: recording.mp3
      * @return text of the recording
      * @throws IOException in case of api error
      */
@@ -122,6 +175,12 @@ public class AIAPI
     }
 
 
+    /**
+     * List the ids of the models available to the api key
+     * @return the model ids, ie: gpt-4o
+     * @throws IOException in case of api error
+     * @see #models()
+     */
     public String[] availableModels()
             throws IOException {
         List<NVGenericMap> models = models();
@@ -133,6 +192,11 @@ public class AIAPI
         return ret.toArray(new String[ret.size()]);
     }
 
+    /**
+     * List the models available to the api key
+     * @return the raw model objects of the {@code data} array, each has at least an {@code id}
+     * @throws IOException in case of api error
+     */
     public List<NVGenericMap> models() throws IOException {
 
         NVGenericMap result = syncCall(AIAPIBuilder.Command.MODELS, null, null);
@@ -141,6 +205,12 @@ public class AIAPI
     }
 
 
+    /**
+     * Retrieve a single model description
+     * @param model the model id, ie: gpt-4o
+     * @return the raw model object
+     * @throws IOException in case of api error or unknown model
+     */
     public NVGenericMap model(String model) throws IOException {
         return syncCall(AIAPIBuilder.Command.MODELS, null, model);
     }
@@ -365,6 +435,18 @@ public class AIAPI
         return "" + content;
     }
 
+    /**
+     * Command line entry point. Arguments are {@code key=value} pairs:
+     * <ul>
+     *   <li>{@code ai-api-key} the api key, required</li>
+     *   <li>{@code ai-type} one of {@link AIAPIBuilder.AIAPIType}, or {@code ai-api-url} a custom base url</li>
+     *   <li>{@code command} one of {@link AIAPIBuilder.Command}: COMPLETION, TRANSCRIBE or MODELS</li>
+     *   <li>{@code ai-model}, {@code prompt}, optional {@code skill-md} and {@code image-url} (local file) for COMPLETION</li>
+     *   <li>{@code file} the audio file for TRANSCRIBE</li>
+     * </ul>
+     * The raw response and the elapsed time are printed to standard output.
+     * @param args the key=value arguments
+     */
     public static void main(String... args) {
         try {
             ParamUtil.ParamMap params = ParamUtil.parse("=", args);

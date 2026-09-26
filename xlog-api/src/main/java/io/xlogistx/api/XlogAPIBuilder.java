@@ -1,7 +1,9 @@
 package io.xlogistx.api;
 
+import okhttp3.OkHttpClient;
 import org.zoxweb.server.http.HTTPAPIEndPoint;
 import org.zoxweb.server.http.HTTPAPIManager;
+import org.zoxweb.server.http.OkHTTPCall;
 import org.zoxweb.server.logging.LogWrapper;
 import org.zoxweb.server.util.GSONUtil;
 import org.zoxweb.shared.http.HTTPMediaType;
@@ -13,6 +15,7 @@ import org.zoxweb.shared.util.*;
 public class XlogAPIBuilder {
     public static final LogWrapper log = new LogWrapper(XlogAPIBuilder.class).setEnabled(true);
     public static final XlogAPIBuilder SINGLETON = new XlogAPIBuilder();
+    public static final OkHttpClient OK_HTTP_CLIENT = OkHTTPCall.createOkHttpBuilder(null, true,null, 300, true, 10, 60).build();
     //private static final RateController RC_TEST = new RateController("test-rc", "10/s");
 
     public enum Command
@@ -55,13 +58,12 @@ public class XlogAPIBuilder {
     private void buildPingAPI() {
         HTTPMessageConfigInterface pingHMCI = HTTPMessageConfig.createAndInit(null, Command.PING.getValue(), HTTPMethod.GET, false, (String) null);
         pingHMCI.setAccept(HTTPMediaType.APPLICATION_JSON);
-//        if(log.isEnabled()) log.getLogger().info("isURLEncodingEnabled:" + pingHMCI.isURLEncodingEnabled());
+
         pingHMCI.setContentType((String) null);
 
         if (log.isEnabled()) log.getLogger().info("isURLEncodingEnabled:" + pingHMCI.isContentURLEncoded());
 
         HTTPAPIEndPoint<Boolean, NVGenericMap> pingAPI = HTTPAPIManager.SINGLETON.buildEndPoint(Command.PING, DOMAIN, "Ping the server", pingHMCI);
-//        pingAPI.setRateController(RC_TEST);
         pingAPI.setDataDecoder(hrd -> GSONUtil.fromJSONDefault(hrd.getDataAsString(), NVGenericMap.class));
         pingAPI.setDataEncoder((hmci, detailed) -> {
             if (detailed)
@@ -70,7 +72,6 @@ public class XlogAPIBuilder {
         });
         if (log.isEnabled()) log.getLogger().info("Endpoint:" + pingAPI.toCanonicalID());
         HTTPAPIManager.SINGLETON.register(pingAPI);
-//        if(log.isEnabled()) log.getLogger().info("after isURLEncodingEnabled:" + pingAPI.getConfig().isURLEncodingEnabled());
     }
 
     private void buildTimestampAPI() {
@@ -94,14 +95,11 @@ public class XlogAPIBuilder {
     }
 
 
-//    public HTTPAPICaller create(String url, HTTPAuthorization authorization)
-//    {
-//        return HTTPAPIManager.SINGLETON.createAPICaller(DOMAIN, "default", authorization).updateURL(url);
-//    }
-
 
     public XlogClient createAPI(String name, String description, NVGenericMap props) {
-        return HTTPAPIManager.SINGLETON.buildAPICaller(new XlogClient(name, description), DOMAIN, props);
+        XlogClient ret =  HTTPAPIManager.SINGLETON.buildAPICaller(new XlogClient(name, description), DOMAIN, props);
+        ret.setOkHttpClient(OK_HTTP_CLIENT);
+        return ret;
     }
 
 }
