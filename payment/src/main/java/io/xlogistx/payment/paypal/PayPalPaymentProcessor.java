@@ -4,7 +4,7 @@ import io.xlogistx.payment.paypal.daos.*;
 import io.xlogistx.shared.data.OrderTransactionDAO;
 import org.zoxweb.server.api.APIPaymentProcessor;
 import org.zoxweb.server.util.DateUtil;
-import org.zoxweb.shared.accounting.FinancialTransactionDAO;
+import org.zoxweb.shared.accounting.FinancialTransaction;
 import org.zoxweb.shared.api.APIConfigInfo;
 import org.zoxweb.shared.api.APIException;
 import org.zoxweb.shared.api.APIExceptionHandler;
@@ -156,13 +156,13 @@ public class PayPalPaymentProcessor
 
 
     @Override
-    public FinancialTransactionDAO createTransaction(FinancialTransactionDAO financialTransactionDAO) {
-        SUS.checkIfNulls("Transaction is null.", financialTransactionDAO);
+    public FinancialTransaction createTransaction(FinancialTransaction financialTransaction) {
+        SUS.checkIfNulls("Transaction is null.", financialTransaction);
 
         OrderTransactionDAO orderTransactionDAO = null;
 
-        if (financialTransactionDAO.getReferencedNVE() instanceof OrderTransactionDAO) {
-            orderTransactionDAO = (OrderTransactionDAO) financialTransactionDAO.getReferencedNVE();
+        if (financialTransaction.getReferencedNVE() instanceof OrderTransactionDAO) {
+            orderTransactionDAO = (OrderTransactionDAO) financialTransaction.getReferencedNVE();
         }
 
         SUS.checkIfNulls("OrderTransactionDAO is missing.", orderTransactionDAO);
@@ -191,8 +191,8 @@ public class PayPalPaymentProcessor
 
         // Amount
         PPAmountDAO amount = new PPAmountDAO();
-        amount.setCurrency(financialTransactionDAO.getAmount().getCurrency().name());
-        amount.setTotal(financialTransactionDAO.getAmount().getAmount().toString());
+        amount.setCurrency(financialTransaction.getAmount().getCurrency().name());
+        amount.setTotal(financialTransaction.getAmount().getAmount().toString());
 
         // Transaction
         PPTransactionDAO transaction = new PPTransactionDAO();
@@ -219,51 +219,51 @@ public class PayPalPaymentProcessor
             throw new APIException("Transaction creation failed: " + e.getMessage());
         }
 
-        financialTransactionDAO.setExternalReference(payment.getID());
+        financialTransaction.setExternalReference(payment.getID());
 
-        return financialTransactionDAO;
+        return financialTransaction;
     }
 
     @Override
-    public FinancialTransactionDAO lookupTransaction(FinancialTransactionDAO financialTransactionDAO) {
+    public FinancialTransaction lookupTransaction(FinancialTransaction financialTransaction) {
         return null;
     }
 
     @Override
-    public FinancialTransactionDAO updateTransaction(FinancialTransactionDAO financialTransactionDAO) {
+    public FinancialTransaction updateTransaction(FinancialTransaction financialTransaction) {
         return null;
     }
 
     @Override
-    public FinancialTransactionDAO cancelTransaction(FinancialTransactionDAO financialTransactionDAO) {
+    public FinancialTransaction cancelTransaction(FinancialTransaction financialTransaction) {
         return null;
     }
 
     @Override
-    public FinancialTransactionDAO captureTransaction(FinancialTransactionDAO financialTransactionDAO) {
+    public FinancialTransaction captureTransaction(FinancialTransaction financialTransaction) {
         return null;
     }
 
     @Override
-    public FinancialTransactionDAO refundTransaction(FinancialTransactionDAO financialTransactionDAO) {
-        SUS.checkIfNulls("Transaction is null.", financialTransactionDAO);
-        SUS.checkIfNulls("External reference is null.", financialTransactionDAO.getExternalReference());
-        SUS.checkIfNulls("Amount is null.", financialTransactionDAO.getAmount());
+    public FinancialTransaction refundTransaction(FinancialTransaction financialTransaction) {
+        SUS.checkIfNulls("Transaction is null.", financialTransaction);
+        SUS.checkIfNulls("External reference is null.", financialTransaction.getExternalReference());
+        SUS.checkIfNulls("Amount is null.", financialTransaction.getAmount());
 
         PPRefundDAO refund = null;
 
         try {
             refund = PayPalRestAPI.refund(apiTokenDAO, URL,
-                    financialTransactionDAO.getExternalReference(),
-                    financialTransactionDAO.getAmount().getAmount().toString(),
-                    financialTransactionDAO.getAmount().getCurrency().name());
+                    financialTransaction.getExternalReference(),
+                    financialTransaction.getAmount().getAmount().toString(),
+                    financialTransaction.getAmount().getCurrency().name());
         } catch (IOException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             throw new APIException("Transaction refund failed: " + e.getMessage());
         }
 
-        financialTransactionDAO.setExternalReference(refund.getID());
+        financialTransaction.setExternalReference(refund.getID());
 
-        return financialTransactionDAO;
+        return financialTransaction;
     }
 
 }

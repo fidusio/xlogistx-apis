@@ -1,7 +1,7 @@
 package io.xlogistx.payment.paypal;
 
 import org.zoxweb.shared.api.APIConfigInfo;
-import org.zoxweb.shared.api.APIConfigInfoDAO;
+import org.zoxweb.shared.api.APIConfigInfoImpl;
 import org.zoxweb.shared.api.APIDataStore;
 import org.zoxweb.shared.api.APIException;
 import org.zoxweb.shared.api.APIExceptionHandler;
@@ -39,7 +39,7 @@ public class PayPalPaymentProcessorCreator
 
     @Override
     public APIConfigInfo createEmptyConfigInfo() {
-        APIConfigInfoDAO configInfo = new APIConfigInfoDAO();
+        APIConfigInfoImpl configInfo = new APIConfigInfoImpl();
         configInfo.setAPITypeName(Param.API_NAME.getName());
         configInfo.setDescription("PayPal API configuration");
         configInfo.setVersion("1.0");
