@@ -45,8 +45,8 @@ public class PayPalPaymentProcessorCreator
         configInfo.setVersion("1.0");
         configInfo.setOAuthVersion(APIConfigInfo.OAuthVersion.OAUTH_2);
         configInfo.setServiceTypes(new APIServiceType[]{APIServiceType.PAYMENT_PROCESSOR});
-        configInfo.getConfigParameters().add(new NVPair(Param.API_KEY, (String) null));
-        configInfo.getConfigParameters().add(new NVPair(Param.API_SECRET, (String) null));
+        configInfo.getProperties().add(new NVPair(Param.API_KEY, (String) null));
+        configInfo.getProperties().add(new NVPair(Param.API_SECRET, (String) null));
 
         return configInfo;
     }

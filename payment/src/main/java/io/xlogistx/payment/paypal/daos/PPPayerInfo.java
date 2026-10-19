@@ -1,11 +1,11 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPPayerInfoDAO
-        extends SetNameDescriptionDAO {
+public class PPPayerInfo
+        extends SetNameDescriptionImpl {
     public enum Params
             implements GetNVConfig {
         EMAIL(NVConfigManager.createNVConfig("email", "Email address representing the payer. 127 characters max.", "Email", true, true, String.class)),
@@ -17,7 +17,7 @@ public class PPPayerInfoDAO
         PAYER_ID(NVConfigManager.createNVConfig("payer_id", "PayPal assigned Payer ID. Value assigned by PayPal.", "PayerID", true, true, String.class)),
         PHONE(NVConfigManager.createNVConfig("phone", "Phone number representing the payer. 20 characters max.", "Phone", true, true, String.class)),
         COUNTRY_CODE(NVConfigManager.createNVConfig("country_code", "Two-letter registered country code of the payer to identify the buyer country.", "CountryCode", true, true, String.class)),
-        SHIPPING_ADDRESS(NVConfigManager.createNVConfigEntity("shipping_address", "Shipping address of payer PayPal account. Value assigned by PayPal.", "ShippingAddress", true, true, PPAddressDAO.NVC_PAYPAL_ADDRESS_DAO)),
+        SHIPPING_ADDRESS(NVConfigManager.createNVConfigEntity("shipping_address", "Shipping address of payer PayPal account. Value assigned by PayPal.", "ShippingAddress", true, true, PPAddress.NVC_PAYPAL_ADDRESS_DAO)),
         TAX_ID_TYPE(NVConfigManager.createNVConfig("tax_id_type", "Payer's tax ID type. Allowed values: BR_CPF or BR_CNPJ. Only supported when the payment_method is set to paypal.", "TaxIDType", true, true, String.class)),
         TAX_ID(NVConfigManager.createNVConfig("tax_id", "Payer�s tax ID. Only supported when the payment_method is set to paypal.", "TaxID", true, true, String.class)),
 
@@ -38,19 +38,19 @@ public class PPPayerInfoDAO
     public static final NVConfigEntity NVC_PAYPAL_PAYER_INFO_DAO = new NVConfigEntityPortable(
             "pp_payer_info_dao",
             null,
-            "PPPayerInfoDAO",
+            "PPPayerInfo",
             true,
             false,
             false,
             false,
-            PPPayerInfoDAO.class,
+            PPPayerInfo.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPPayerInfoDAO() {
+    public PPPayerInfo() {
         super(NVC_PAYPAL_PAYER_INFO_DAO);
     }
 
@@ -126,11 +126,11 @@ public class PPPayerInfoDAO
         setValue(Params.COUNTRY_CODE, countryCode);
     }
 
-    public PPAddressDAO getShippingAddress() {
+    public PPAddress getShippingAddress() {
         return lookupValue(Params.SHIPPING_ADDRESS);
     }
 
-    public void setShippingAddress(PPAddressDAO address) {
+    public void setShippingAddress(PPAddress address) {
         setValue(Params.SHIPPING_ADDRESS, address);
     }
 

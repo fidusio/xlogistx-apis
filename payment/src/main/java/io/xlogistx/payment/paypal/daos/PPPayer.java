@@ -1,19 +1,19 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
 
 import java.util.List;
 
 @SuppressWarnings("serial")
-public class PPPayerDAO
-        extends SetNameDescriptionDAO {
+public class PPPayer
+        extends SetNameDescriptionImpl {
     public enum Params
             implements GetNVConfig {
         PAYMENT_METHOD(NVConfigManager.createNVConfig("payment_method", "Payment method used. Must be either credit_card or paypal.", "PaymentMethod", true, true, String.class)),
-        FUNDING_INSTRUMENTS(NVConfigManager.createNVConfigEntity("funding_instruments", "A list of funding instruments for the current payment.", "FundingInstruments", true, true, PPFundingInstrumentDAO.NVC_PAYPAL_FUNDING_INSTRUMENT_DAO, ArrayType.LIST)),
-        PAYER_INFO(NVConfigManager.createNVConfigEntity("payer_info", "Information related to the payer.", "PayerInfo", true, true, PPPayerInfoDAO.NVC_PAYPAL_PAYER_INFO_DAO)),
+        FUNDING_INSTRUMENTS(NVConfigManager.createNVConfigEntity("funding_instruments", "A list of funding instruments for the current payment.", "FundingInstruments", true, true, PPFundingInstrument.NVC_PAYPAL_FUNDING_INSTRUMENT_DAO, ArrayType.LIST)),
+        PAYER_INFO(NVConfigManager.createNVConfigEntity("payer_info", "Information related to the payer.", "PayerInfo", true, true, PPPayerInfo.NVC_PAYPAL_PAYER_INFO_DAO)),
         STATUS(NVConfigManager.createNVConfig("status", "Status of the payer's PayPal account. Only supported when the payment_method is set to paypal. Allowed values: VERIFIED or UNVERIFIED.", "Status", true, true, String.class));
 
         private final NVConfig cType;
@@ -31,19 +31,19 @@ public class PPPayerDAO
     public static final NVConfigEntity NVC_PAYPAL_PAYER_DAO = new NVConfigEntityPortable(
             "pp_payer_dao",
             null,
-            "PPPayerDAO",
+            "PPPayer",
             true,
             false,
             false,
             false,
-            PPPayerDAO.class,
+            PPPayer.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPPayerDAO() {
+    public PPPayer() {
         super(NVC_PAYPAL_PAYER_DAO);
     }
 
@@ -56,27 +56,27 @@ public class PPPayerDAO
     }
 
     @SuppressWarnings("unchecked")
-    public ArrayValues<PPFundingInstrumentDAO> getFundingInstruments() {
-        return (ArrayValues<PPFundingInstrumentDAO>) lookup(Params.FUNDING_INSTRUMENTS);
+    public ArrayValues<PPFundingInstrument> getFundingInstruments() {
+        return (ArrayValues<PPFundingInstrument>) lookup(Params.FUNDING_INSTRUMENTS);
     }
 
     @SuppressWarnings("unchecked")
-    public void setFundingInstruments(ArrayValues<PPFundingInstrumentDAO> values) {
-        ArrayValues<PPFundingInstrumentDAO> content = (ArrayValues<PPFundingInstrumentDAO>) lookup(Params.FUNDING_INSTRUMENTS);
+    public void setFundingInstruments(ArrayValues<PPFundingInstrument> values) {
+        ArrayValues<PPFundingInstrument> content = (ArrayValues<PPFundingInstrument>) lookup(Params.FUNDING_INSTRUMENTS);
         content.add(values.values(), true);
     }
 
     @SuppressWarnings("unchecked")
-    public void setFundingInstruments(List<PPFundingInstrumentDAO> values) {
-        ArrayValues<PPFundingInstrumentDAO> content = (ArrayValues<PPFundingInstrumentDAO>) lookup(Params.FUNDING_INSTRUMENTS);
-        content.add(values.toArray(new PPFundingInstrumentDAO[0]), true);
+    public void setFundingInstruments(List<PPFundingInstrument> values) {
+        ArrayValues<PPFundingInstrument> content = (ArrayValues<PPFundingInstrument>) lookup(Params.FUNDING_INSTRUMENTS);
+        content.add(values.toArray(new PPFundingInstrument[0]), true);
     }
 
-    public PPPayerInfoDAO getPayerInfo() {
+    public PPPayerInfo getPayerInfo() {
         return lookupValue(Params.PAYER_INFO);
     }
 
-    public void setPayerInfo(PPPayerInfoDAO info) {
+    public void setPayerInfo(PPPayerInfo info) {
         setValue(Params.PAYER_INFO, info);
     }
 

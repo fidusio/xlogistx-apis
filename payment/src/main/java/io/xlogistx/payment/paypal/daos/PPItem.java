@@ -1,11 +1,11 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPItemDAO
-        extends SetNameDescriptionDAO {
+public class PPItem
+        extends SetNameDescriptionImpl {
     public enum Params
             implements GetNVConfig {
         QUANTITY(NVConfigManager.createNVConfig("quantity", "Number of a particular item. 10 characters max.", "Quantity", true, true, String.class)),
@@ -33,19 +33,19 @@ public class PPItemDAO
     public static final NVConfigEntity NVC_ITEM_DAO = new NVConfigEntityPortable(
             "pp_item_dao",
             null,
-            "PPItemDAO",
+            "PPItem",
             true,
             false,
             false,
             false,
-            PPItemDAO.class,
+            PPItem.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPItemDAO() {
+    public PPItem() {
         super(NVC_ITEM_DAO);
     }
 

@@ -1,11 +1,11 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPCurrencyDAO
-        extends SetNameDescriptionDAO {
+public class PPCurrency
+        extends SetNameDescriptionImpl {
     public enum Params
             implements GetNVConfig {
         CURRENCY(NVConfigManager.createNVConfig("currency", "3 letter currency code as defined by ISO 4217.", "Currency", true, true, String.class)),
@@ -27,19 +27,19 @@ public class PPCurrencyDAO
     public static final NVConfigEntity NVC_PAYPAL_CURRENCY_DAO = new NVConfigEntityPortable(
             "pp_currency_dao",
             null,
-            "PPCurrencyDAO",
+            "PPCurrency",
             true,
             false,
             false,
             false,
-            PPCurrencyDAO.class,
+            PPCurrency.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPCurrencyDAO() {
+    public PPCurrency() {
         super(NVC_PAYPAL_CURRENCY_DAO);
     }
 

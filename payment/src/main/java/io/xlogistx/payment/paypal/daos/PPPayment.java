@@ -1,7 +1,7 @@
 package io.xlogistx.payment.paypal.daos;
 
 import org.zoxweb.server.filters.DateTimeValueFilter;
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.http.HATEOASLink;
 import org.zoxweb.shared.util.*;
 import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
@@ -9,14 +9,14 @@ import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
 import java.util.Date;
 
 @SuppressWarnings("serial")
-public class PPPaymentDAO
-        extends SetNameDescriptionDAO {
+public class PPPayment
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
         INTENT(NVConfigManager.createNVConfig("intent", "Payment intent. Must be set to sale for immediate payment, authorize to authorize a payment for capture later, or order to create an order.", "Intent", true, true, String.class)),
-        PAYER(NVConfigManager.createNVConfigEntity("payer", "Source of the funds for this payment represented by a PayPal account or a direct credit card.", "Payer", true, true, PPPayerDAO.NVC_PAYPAL_PAYER_DAO)),
-        TRANSACTIONS(NVConfigManager.createNVConfigEntity("transactions", "Transactional details including the amount and item details.", "Transactions", true, true, PPTransactionDAO.NVC_PAYPAL_TRANSACTION_DAO, ArrayType.LIST)),
+        PAYER(NVConfigManager.createNVConfigEntity("payer", "Source of the funds for this payment represented by a PayPal account or a direct credit card.", "Payer", true, true, PPPayer.NVC_PAYPAL_PAYER_DAO)),
+        TRANSACTIONS(NVConfigManager.createNVConfigEntity("transactions", "Transactional details including the amount and item details.", "Transactions", true, true, PPTransaction.NVC_PAYPAL_TRANSACTION_DAO, ArrayType.LIST)),
         //REDIRECT_URLS(NVConfigManager.createNVConfigEntity("redirect_urls", "Set of redirect URLs you provide only for PayPal-based payments. Returned only when the payment is in created state. ", "RedirectURLs", true, true, PPRedirectURLS)),
         ID(NVConfigManager.createNVConfig("id", "ID of the created payment. Value assigned by PayPal.", "ID", false, true, String.class)),
         CREATE_TIME(NVConfigManager.createNVConfig("create_time", "Payment creation time as defined in RFC 3339 Section 5.6.Value assigned by PayPal.", "CreateTime", false, true, false, Date.class, new DateTimeValueFilter("yyyy-MM-dd'T'HH:mm:ss'Z'", "UTC"))),
@@ -41,19 +41,19 @@ public class PPPaymentDAO
     public static final NVConfigEntity NVC_PAYPAL_PAYMENT_DAO = new NVConfigEntityPortable(
             "pp_payment_dao",
             null,
-            "PPPaymentDAO",
+            "PPPayment",
             true,
             false,
             false,
             false,
-            PPPaymentDAO.class,
+            PPPayment.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPPaymentDAO() {
+    public PPPayment() {
         super(NVC_PAYPAL_PAYMENT_DAO);
     }
 
@@ -65,11 +65,11 @@ public class PPPaymentDAO
         setValue(Params.INTENT, intent);
     }
 
-    public PPPayerDAO getPayer() {
+    public PPPayer getPayer() {
         return lookupValue(Params.PAYER);
     }
 
-    public void setPayer(PPPayerDAO payer) {
+    public void setPayer(PPPayer payer) {
         setValue(Params.PAYER, payer);
     }
 
@@ -79,17 +79,17 @@ public class PPPaymentDAO
     }
 
 //	@SuppressWarnings("unchecked")
-//	public void setTransactions(ArrayValues<PPTransactionDAO> values)
+//	public void setTransactions(ArrayValues<PPTransaction> values)
 //	{
-//		ArrayValues<PPTransactionDAO> content = (ArrayValues<PPTransactionDAO>) lookup(Params.TRANSACTIONS);
+//		ArrayValues<PPTransaction> content = (ArrayValues<PPTransaction>) lookup(Params.TRANSACTIONS);
 //		content.add(values.values(), true);
 //	}
 //	
 //	@SuppressWarnings("unchecked")
-//	public void setTransactions(List<PPTransactionDAO> values)
+//	public void setTransactions(List<PPTransaction> values)
 //	{
-//		ArrayValues<PPTransactionDAO> content = (ArrayValues<PPTransactionDAO>) lookup(Params.TRANSACTIONS);
-//		content.add(values.toArray(new PPTransactionDAO[0]), true);
+//		ArrayValues<PPTransaction> content = (ArrayValues<PPTransaction>) lookup(Params.TRANSACTIONS);
+//		content.add(values.toArray(new PPTransaction[0]), true);
 //	}
 
     public String getID() {

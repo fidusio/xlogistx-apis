@@ -1,15 +1,15 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
 
 @SuppressWarnings("serial")
-public class PPComboResourceDAO extends SetNameDescriptionDAO {
+public class PPComboResource extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
-        SALE(NVConfigManager.createNVConfigEntity("sale", "Financial transactions related to a payment.", "RelatedResources", false, true, PPSaleDAO.NVC_PAYPAL_SALE_DAO, ArrayType.NOT_ARRAY)),
+        SALE(NVConfigManager.createNVConfigEntity("sale", "Financial transactions related to a payment.", "RelatedResources", false, true, PPSale.NVC_PAYPAL_SALE_DAO, ArrayType.NOT_ARRAY)),
 
         ;
 
@@ -27,27 +27,27 @@ public class PPComboResourceDAO extends SetNameDescriptionDAO {
     public static final NVConfigEntity NVC_COMBO_RESOURCE_DAO = new NVConfigEntityPortable(
             "pp_combo_resource_dao",
             null,
-            "PPComboResourceDAO",
+            "PPComboResource",
             true,
             false,
             false,
             false,
-            PPComboResourceDAO.class,
+            PPComboResource.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPComboResourceDAO() {
+    public PPComboResource() {
         super(NVC_COMBO_RESOURCE_DAO);
     }
 
-    public PPSaleDAO getSale() {
+    public PPSale getSale() {
         return lookupValue(Params.SALE);
     }
 
-    public void setSale(PPSaleDAO sale) {
+    public void setSale(PPSale sale) {
         setValue(Params.SALE, sale);
     }
 

@@ -1,17 +1,17 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPAmountDAO
-        extends SetNameDescriptionDAO {
+public class PPAmount
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
         CURRENCY(NVConfigManager.createNVConfig("currency", "3-letter currency code. PayPal does not support all currencies.", "Currency", true, true, String.class)),
         TOTAL(NVConfigManager.createNVConfig("total", "Total amount charged from the payer to the payee. In case of a refund, this is the refunded amount to the original payer from the payee. 10 characters max with support for 2 decimal places.", "Total", true, true, String.class)),
-        DETAILS(NVConfigManager.createNVConfigEntity("details", "Additional details related to a payment amount.", "Details", false, true, PPDetailsDAO.NVC_PAYPAL_DETAILS_DAO)),
+        DETAILS(NVConfigManager.createNVConfigEntity("details", "Additional details related to a payment amount.", "Details", false, true, PPDetails.NVC_PAYPAL_DETAILS_DAO)),
 
         ;
 
@@ -29,19 +29,19 @@ public class PPAmountDAO
     public static final NVConfigEntity NVC_PAYPAL_AMOUNT_DAO = new NVConfigEntityPortable(
             "pp_amount_dao",
             null,
-            "PPAmountDAO",
+            "PPAmount",
             true,
             false,
             false,
             false,
-            PPAmountDAO.class,
+            PPAmount.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPAmountDAO() {
+    public PPAmount() {
         super(NVC_PAYPAL_AMOUNT_DAO);
     }
 
@@ -61,11 +61,11 @@ public class PPAmountDAO
         setValue(Params.TOTAL, total);
     }
 
-    public PPDetailsDAO getDetails() {
+    public PPDetails getDetails() {
         return lookupValue(Params.DETAILS);
     }
 
-    public void setDetails(PPDetailsDAO details) {
+    public void setDetails(PPDetails details) {
         setValue(Params.DETAILS, details);
     }
 

@@ -1,14 +1,14 @@
 package io.xlogistx.payment.paypal.daos;
 
 import org.zoxweb.server.filters.DateTimeValueFilter;
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 import java.util.Date;
 
 @SuppressWarnings("serial")
-public class PPCreditCardDAO
-        extends SetNameDescriptionDAO {
+public class PPCreditCard
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
@@ -21,7 +21,7 @@ public class PPCreditCardDAO
         CVV2(NVConfigManager.createNVConfig("cvv2", "3-4 digit card validation code.", "CardValidationCode", true, true, String.class)),
         FIRST_NAME(NVConfigManager.createNVConfig("first_name", "Cardholder�s first name.", "FirstName", true, true, String.class)),
         LAST_NAME(NVConfigManager.createNVConfig("last_name", "Cardholder�s last name.", "LastName", true, true, String.class)),
-        BILLING_ADDRESS(NVConfigManager.createNVConfigEntity("billing_address", "Billing address associated with card.", "BillingAddress", true, true, PPAddressDAO.NVC_PAYPAL_ADDRESS_DAO)),
+        BILLING_ADDRESS(NVConfigManager.createNVConfigEntity("billing_address", "Billing address associated with card.", "BillingAddress", true, true, PPAddress.NVC_PAYPAL_ADDRESS_DAO)),
         EXTERNAL_CUSTOMER_ID(NVConfigManager.createNVConfig("external_customer_id", "A unique identifier of the customer to whom this bank account belongs. Generated and provided by the facilitator.", "ExternalCustomerID", true, true, String.class)),
         MERCHANT_ID(NVConfigManager.createNVConfig("merchant_id", "A user-provided, optional field that functions as a unique identifier for the merchant holding the card. Note that this has no relation to PayPal merchant id.", "MerchantID", true, true, String.class)),
         EXTERNAL_CARD_ID(NVConfigManager.createNVConfig("external_card_id", "A unique identifier of the bank account resource. Generated and provided by the facilitator so it can be used to restrict the usage of the bank account to the specific merchant.", "ExternalCardID", true, true, String.class)),
@@ -46,19 +46,19 @@ public class PPCreditCardDAO
     public static final NVConfigEntity NVC_PAYPAL_CREDIT_CARD_DAO = new NVConfigEntityPortable(
             "pp_credit_card_dao",
             null,
-            "PPCreditCardDAO",
+            "PPCreditCard",
             true,
             false,
             false,
             false,
-            PPCreditCardDAO.class,
+            PPCreditCard.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPCreditCardDAO() {
+    public PPCreditCard() {
         super(NVC_PAYPAL_CREDIT_CARD_DAO);
     }
 
@@ -134,11 +134,11 @@ public class PPCreditCardDAO
         setValue(Params.LAST_NAME, lastName);
     }
 
-    public PPAddressDAO getBillingAddress() {
+    public PPAddress getBillingAddress() {
         return lookupValue(Params.BILLING_ADDRESS);
     }
 
-    public void setBillingAddress(PPAddressDAO address) {
+    public void setBillingAddress(PPAddress address) {
         setValue(Params.BILLING_ADDRESS, address);
     }
 

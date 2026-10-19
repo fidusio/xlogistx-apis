@@ -1,7 +1,7 @@
 package io.xlogistx.payment.paypal.daos;
 
 import org.zoxweb.server.filters.DateTimeValueFilter;
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.http.HATEOASLink;
 import org.zoxweb.shared.util.*;
 import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
@@ -9,13 +9,13 @@ import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
 import java.util.Date;
 
 @SuppressWarnings("serial")
-public class PPSaleDAO
-        extends SetNameDescriptionDAO {
+public class PPSale
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
         ID(NVConfigManager.createNVConfig("id", "ID of the sale transaction.", "ID", true, true, String.class)),
-        AMOUNT(NVConfigManager.createNVConfigEntity("amount", "Details of the collected amount. ", "Amount", true, true, PPAmountDAO.NVC_PAYPAL_AMOUNT_DAO)),
+        AMOUNT(NVConfigManager.createNVConfigEntity("amount", "Details of the collected amount. ", "Amount", true, true, PPAmount.NVC_PAYPAL_AMOUNT_DAO)),
         CREATE_TIME(NVConfigManager.createNVConfig("create_time", "Time of sale as defined in RFC 3339 Section 5.6. Value assigned by PayPal.", "CreateTime", true, true, false, Date.class, new DateTimeValueFilter("yyyy-MM-dd'T'HH:mm:ss'Z'", "UTC"))),
         STATE(NVConfigManager.createNVConfig("state", "State of the sale. One of the following: pending; completed; refunded; or partially_refunded. Value assigned by PayPal.", "State", true, true, String.class)),
         PARENT_PAYMENT(NVConfigManager.createNVConfig("parent_payment", "ID of the payment resource on which this transaction is based. Value assigned by PayPal.", "ParentPayment", true, true, String.class)),
@@ -23,10 +23,10 @@ public class PPSaleDAO
         PAYMENT_MODE(NVConfigManager.createNVConfig("payment_mode", "Specifies payment mode of the transaction. Only supported when the payment_method is set to paypal. Assigned by PayPal.", "PaymentMode", true, true, String.class)),
         REASON_CODE(NVConfigManager.createNVConfig("reason_code", "Reason code for the transaction state being Pending or Reversed. Only supported when the payment_method is set to paypal.Assigned by PayPal.", "ReasonCode", true, true, String.class)),
         CLEARING_TIME(NVConfigManager.createNVConfig("clearing_time", "Expected clearing time for eCheck transactions. Only supported when the payment_method is set to paypal. Assigned by PayPal.", "ClearingTime", true, true, String.class)),
-        TRANSACTION_FEE(NVConfigManager.createNVConfigEntity("transaction_fee", "Transaction fee charged by PayPal for this transaction.", "TransactionFee", true, true, PPCurrencyDAO.NVC_PAYPAL_CURRENCY_DAO)),
-        RECEIVABLE_AMOUNT(NVConfigManager.createNVConfigEntity("receivable_amount", "Net amount the merchant receives for this transaction in their receivable currency. Returned only in cross-currency use cases where a merchant bills a buyer in a non-primary currency for that buyer.", "ReceivableAmount", true, true, PPCurrencyDAO.NVC_PAYPAL_CURRENCY_DAO)),
+        TRANSACTION_FEE(NVConfigManager.createNVConfigEntity("transaction_fee", "Transaction fee charged by PayPal for this transaction.", "TransactionFee", true, true, PPCurrency.NVC_PAYPAL_CURRENCY_DAO)),
+        RECEIVABLE_AMOUNT(NVConfigManager.createNVConfigEntity("receivable_amount", "Net amount the merchant receives for this transaction in their receivable currency. Returned only in cross-currency use cases where a merchant bills a buyer in a non-primary currency for that buyer.", "ReceivableAmount", true, true, PPCurrency.NVC_PAYPAL_CURRENCY_DAO)),
         EXCHANGE_RATE(NVConfigManager.createNVConfig("exchange_rate", "Exchange rate applied for this transaction. Returned only in cross-currency use cases where a merchant bills a buyer in a non-primary currency for that buyer.", "ExchangeRate", true, true, String.class)),
-        FMF_DETAILS(NVConfigManager.createNVConfigEntity("fmf_details", "Fraud Management Filter (FMF) details applied for the payment that could result in accept, deny, or pending action.", "FMFDetails", true, true, PPFMFDetailsDAO.NVC_PAYPAL_FMF_DETAILS_DAO)),
+        FMF_DETAILS(NVConfigManager.createNVConfigEntity("fmf_details", "Fraud Management Filter (FMF) details applied for the payment that could result in accept, deny, or pending action.", "FMFDetails", true, true, PPFMFDetails.NVC_PAYPAL_FMF_DETAILS_DAO)),
         RECEIPT_ID(NVConfigManager.createNVConfig("receipt_id", "Receipt ID is a 16-digit payment identification number returned for guest users to identify the payment.", "ReceiptID", true, true, String.class)),
         PROTECTION_ELIGIBILITY(NVConfigManager.createNVConfig("protection_eligibility", "The level of seller protection in force for the transaction. Only supported when the payment_method is set to paypal.", "ProtectionEligibility", true, true, String.class)),
         PROTECTION_ELIGIBILITY_TYPE(NVConfigManager.createNVConfig("protection_eligibility_type", "", "ProtectionEligibilityType", true, true, String.class)),
@@ -49,19 +49,19 @@ public class PPSaleDAO
     public static final NVConfigEntity NVC_PAYPAL_SALE_DAO = new NVConfigEntityPortable(
             "pp_sale_dao",
             null,
-            "PPSaleDAO",
+            "PPSale",
             true,
             false,
             false,
             false,
-            PPSaleDAO.class,
+            PPSale.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPSaleDAO() {
+    public PPSale() {
         super(NVC_PAYPAL_SALE_DAO);
     }
 
@@ -73,11 +73,11 @@ public class PPSaleDAO
         setValue(Params.ID, id);
     }
 
-    public PPAmountDAO getAmount() {
+    public PPAmount getAmount() {
         return lookupValue(Params.AMOUNT);
     }
 
-    public void setAmount(PPAmountDAO amount) {
+    public void setAmount(PPAmount amount) {
         setValue(Params.AMOUNT, amount);
     }
 
@@ -137,19 +137,19 @@ public class PPSaleDAO
         setValue(Params.CLEARING_TIME, time);
     }
 
-    public PPCurrencyDAO getTransactionFee() {
+    public PPCurrency getTransactionFee() {
         return lookupValue(Params.TRANSACTION_FEE);
     }
 
-    public void setTransactionFee(PPCurrencyDAO fee) {
+    public void setTransactionFee(PPCurrency fee) {
         setValue(Params.TRANSACTION_FEE, fee);
     }
 
-    public PPCurrencyDAO getReceivableAmount() {
+    public PPCurrency getReceivableAmount() {
         return lookupValue(Params.RECEIVABLE_AMOUNT);
     }
 
-    public void setReceivableAmount(PPCurrencyDAO amount) {
+    public void setReceivableAmount(PPCurrency amount) {
         setValue(Params.RECEIVABLE_AMOUNT, amount);
     }
 
@@ -161,11 +161,11 @@ public class PPSaleDAO
         setValue(Params.EXCHANGE_RATE, rate);
     }
 
-    public PPFMFDetailsDAO getFMFDetails() {
+    public PPFMFDetails getFMFDetails() {
         return lookupValue(Params.FMF_DETAILS);
     }
 
-    public void setFMFDetails(PPFMFDetailsDAO fmfDetails) {
+    public void setFMFDetails(PPFMFDetails fmfDetails) {
         setValue(Params.FMF_DETAILS, fmfDetails);
     }
 

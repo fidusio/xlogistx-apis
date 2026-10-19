@@ -1,11 +1,11 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPFMFDetailsDAO
-        extends SetNameDescriptionDAO {
+public class PPFMFDetails
+        extends SetNameDescriptionImpl {
 
     public enum FilterType {
         ACCEPT,
@@ -58,19 +58,19 @@ public class PPFMFDetailsDAO
     public static final NVConfigEntity NVC_PAYPAL_FMF_DETAILS_DAO = new NVConfigEntityPortable(
             "pp_fmf_details_dao",
             null,
-            "PPFMFDetailsDAO",
+            "PPFMFDetails",
             true,
             false,
             false,
             false,
-            PPFMFDetailsDAO.class,
+            PPFMFDetails.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPFMFDetailsDAO() {
+    public PPFMFDetails() {
         super(NVC_PAYPAL_FMF_DETAILS_DAO);
     }
 

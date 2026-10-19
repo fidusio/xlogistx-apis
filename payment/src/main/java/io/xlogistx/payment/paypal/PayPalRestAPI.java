@@ -2,16 +2,16 @@ package io.xlogistx.payment.paypal;
 
 import org.zoxweb.server.http.HTTPCall;
 import org.zoxweb.server.util.GSONUtil;
-import org.zoxweb.shared.api.APITokenDAO;
+import org.zoxweb.shared.api.APIToken;
 import org.zoxweb.shared.http.*;
 import org.zoxweb.shared.util.Const;
 import org.zoxweb.shared.util.NVEntity;
 import org.zoxweb.shared.util.NVPair;
 import org.zoxweb.shared.util.SUS;
 
-import io.xlogistx.payment.paypal.daos.PPAmountDAO;
-import io.xlogistx.payment.paypal.daos.PPPaymentDAO;
-import io.xlogistx.payment.paypal.daos.PPRefundDAO;
+import io.xlogistx.payment.paypal.daos.PPAmount;
+import io.xlogistx.payment.paypal.daos.PPPayment;
+import io.xlogistx.payment.paypal.daos.PPRefund;
 
 import java.io.IOException;
 
@@ -21,7 +21,7 @@ public class PayPalRestAPI {
 
     }
 
-    public static APITokenDAO OAUTH2Token(String url, String clientID, String clientSecret)
+    public static APIToken OAUTH2Token(String url, String clientID, String clientSecret)
             throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, NullPointerException, IllegalArgumentException {
 
         HTTPMessageConfigInterface hcc = HTTPMessageConfig.createAndInit(url, "/v1/oauth2/token", HTTPMethod.POST);
@@ -32,7 +32,7 @@ public class PayPalRestAPI {
         hcc.getParameters().add(new NVPair("grant_type", "client_credentials"));
         HTTPCall hc = new HTTPCall(hcc, null);
         HTTPResponseData rd = hc.sendRequest();
-        APITokenDAO ret = GSONUtil.fromJSON(SUS.toString(rd.getData()), APITokenDAO.class);
+        APIToken ret = GSONUtil.fromJSON(SUS.toString(rd.getData()), APIToken.class);
 
         ret.setCreationTime(System.currentTimeMillis());
         ret.setLastTimeUpdated(System.currentTimeMillis());
@@ -42,7 +42,7 @@ public class PayPalRestAPI {
         return ret;
     }
 
-    public static PPPaymentDAO payment(APITokenDAO token, String url, PPPaymentDAO payment)
+    public static PPPayment payment(APIToken token, String url, PPPayment payment)
             throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, NullPointerException, IllegalArgumentException {
         HTTPMessageConfigInterface hcc = HTTPMessageConfig.createAndInit(url, "/v1/payments/payment", HTTPMethod.POST);
         hcc.setContentType(HTTPMediaType.APPLICATION_JSON);
@@ -57,11 +57,11 @@ public class PayPalRestAPI {
         HTTPCall hc = new HTTPCall(hcc, null);
         HTTPResponseData rd = hc.sendRequest();
 
-        PPPaymentDAO response = GSONUtil.fromJSON(SUS.toString(rd.getData()), PPPaymentDAO.class);
+        PPPayment response = GSONUtil.fromJSON(SUS.toString(rd.getData()), PPPayment.class);
         return response;
     }
 
-    public static PPRefundDAO refund(APITokenDAO token, String url, String refundID, String total, String currency)
+    public static PPRefund refund(APIToken token, String url, String refundID, String total, String currency)
             throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException, NullPointerException, IllegalArgumentException {
         HTTPMessageConfigInterface hcc = HTTPMessageConfig.createAndInit(url, "/v1/payments/sale/" + refundID + "/refund", HTTPMethod.POST);
         hcc.setContentType(HTTPMediaType.APPLICATION_JSON);
@@ -69,7 +69,7 @@ public class PayPalRestAPI {
         hcc.getHeaders().add(new NVPair(HTTPHeader.ACCEPT_LANGUAGE, "en_US"));
         //hcc.getHeaderParameters().add(HTTPAuthorizationType.BEARER.toHTTPHeader(token.getTokenType(), token.getAccessToken()));
         hcc.setAuthorization(HTTPAuthorization.createBearer(token.getAccessToken()));
-        PPAmountDAO amount = new PPAmountDAO();
+        PPAmount amount = new PPAmount();
         amount.setTotal(total);
         amount.setCurrency(currency);
 
@@ -80,7 +80,7 @@ public class PayPalRestAPI {
         HTTPCall hc = new HTTPCall(hcc, null);
         HTTPResponseData rd = hc.sendRequest();
 
-        return GSONUtil.fromJSON(SUS.toString(rd.getData()), PPRefundDAO.class);
+        return GSONUtil.fromJSON(SUS.toString(rd.getData()), PPRefund.class);
     }
 
 

@@ -1,15 +1,15 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPFundingInstrumentDAO
-        extends SetNameDescriptionDAO {
+public class PPFundingInstrument
+        extends SetNameDescriptionImpl {
     public enum Params
             implements GetNVConfig {
-        CREDIT_CARD(NVConfigManager.createNVConfigEntity("credit_card", "Credit card details.", "CreditCard", true, true, PPCreditCardDAO.NVC_PAYPAL_CREDIT_CARD_DAO)),
-        CREDIT_CARD_TOKEN(NVConfigManager.createNVConfigEntity("credit_card_token", "Token for credit card details stored with PayPal. You can use this in place of a credit card.", "CreditCardToken", true, true, PPCreditCardTokenDAO.NVC_PAYPAL_CREDIT_CARD_TOKEN_DAO)),
+        CREDIT_CARD(NVConfigManager.createNVConfigEntity("credit_card", "Credit card details.", "CreditCard", true, true, PPCreditCard.NVC_PAYPAL_CREDIT_CARD_DAO)),
+        CREDIT_CARD_TOKEN(NVConfigManager.createNVConfigEntity("credit_card_token", "Token for credit card details stored with PayPal. You can use this in place of a credit card.", "CreditCardToken", true, true, PPCreditCardToken.NVC_PAYPAL_CREDIT_CARD_TOKEN_DAO)),
 
         ;
 
@@ -27,35 +27,35 @@ public class PPFundingInstrumentDAO
     public static final NVConfigEntity NVC_PAYPAL_FUNDING_INSTRUMENT_DAO = new NVConfigEntityPortable(
             "pp_funding_instrument_dao",
             null,
-            "PPFundingInstrumentDAO",
+            "PPFundingInstrument",
             true,
             false,
             false,
             false,
-            PPFundingInstrumentDAO.class,
+            PPFundingInstrument.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPFundingInstrumentDAO() {
+    public PPFundingInstrument() {
         super(NVC_PAYPAL_FUNDING_INSTRUMENT_DAO);
     }
 
-    public PPCreditCardDAO getCreditCard() {
+    public PPCreditCard getCreditCard() {
         return lookupValue(Params.CREDIT_CARD);
     }
 
-    public void setCreditCard(PPCreditCardDAO card) {
+    public void setCreditCard(PPCreditCard card) {
         setValue(Params.CREDIT_CARD, card);
     }
 
-    public PPCreditCardTokenDAO getCreditCardToken() {
+    public PPCreditCardToken getCreditCardToken() {
         return lookupValue(Params.CREDIT_CARD_TOKEN);
     }
 
-    public void setCreditCardToken(PPCreditCardTokenDAO token) {
+    public void setCreditCardToken(PPCreditCardToken token) {
         setValue(Params.CREDIT_CARD_TOKEN, token);
     }
 

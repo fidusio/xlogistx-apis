@@ -1,7 +1,7 @@
 package io.xlogistx.payment.paypal.daos;
 
 import org.zoxweb.server.filters.DateTimeValueFilter;
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.http.HATEOASLink;
 import org.zoxweb.shared.util.*;
 import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
@@ -9,13 +9,13 @@ import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
 import java.util.Date;
 
 @SuppressWarnings("serial")
-public class PPRefundDAO
-        extends SetNameDescriptionDAO {
+public class PPRefund
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
         ID(NVConfigManager.createNVConfig("id", "ID of the refund transaction. 17 characters max.", "ID", true, true, String.class)),
-        AMOUNT(NVConfigManager.createNVConfigEntity("amount", "Details including both refunded amount (to payer) and refunded fee (to payee). 10 characters max.", "Amount", true, true, PPAmountDAO.NVC_PAYPAL_AMOUNT_DAO)),
+        AMOUNT(NVConfigManager.createNVConfigEntity("amount", "Details including both refunded amount (to payer) and refunded fee (to payee). 10 characters max.", "Amount", true, true, PPAmount.NVC_PAYPAL_AMOUNT_DAO)),
         CREATE_TIME(NVConfigManager.createNVConfig("create_time", "Time of refund as defined in RFC 3339 Section 5.6. Value assigned by PayPal.", "CreateTime", true, true, false, Date.class, new DateTimeValueFilter("yyyy-MM-dd'T'HH:mm:ss'Z'", "UTC"))),
         STATE(NVConfigManager.createNVConfig("state", "State of the refund. One of the following: pending; completed; or failed. Value assigned by PayPal.", "State", true, true, String.class)),
         CAPTURE_ID(NVConfigManager.createNVConfig("capture_id", "ID of the sale transaction being refunded. Value assigned by PayPal.", "CaptureID", true, true, String.class)),
@@ -40,19 +40,19 @@ public class PPRefundDAO
     public static final NVConfigEntity NVC_PAYPAL_REFUND_DAO = new NVConfigEntityPortable(
             "pp_refund_dao",
             null,
-            "PPRefundDAO",
+            "PPRefund",
             true,
             false,
             false,
             false,
-            PPRefundDAO.class,
+            PPRefund.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPRefundDAO() {
+    public PPRefund() {
         super(NVC_PAYPAL_REFUND_DAO);
     }
 
@@ -64,11 +64,11 @@ public class PPRefundDAO
         setValue(Params.ID, id);
     }
 
-    public PPAmountDAO getAmount() {
+    public PPAmount getAmount() {
         return lookupValue(Params.AMOUNT);
     }
 
-    public void setAmount(PPAmountDAO amount) {
+    public void setAmount(PPAmount amount) {
         setValue(Params.AMOUNT, amount);
     }
 

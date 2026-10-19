@@ -8,9 +8,9 @@ import org.zoxweb.shared.accounting.FinancialTransaction;
 import org.zoxweb.shared.api.APIConfigInfo;
 import org.zoxweb.shared.api.APIException;
 import org.zoxweb.shared.api.APIExceptionHandler;
-import org.zoxweb.shared.api.APITokenDAO;
-import org.zoxweb.shared.data.AddressDAO;
-import org.zoxweb.shared.data.CreditCardDAO;
+import org.zoxweb.shared.api.APIToken;
+import org.zoxweb.shared.data.AddressInfo;
+import org.zoxweb.shared.data.CreditCardInfo;
 import org.zoxweb.shared.util.GetName;
 import org.zoxweb.shared.util.SUS;
 
@@ -19,12 +19,12 @@ import java.io.IOException;
 
 @SuppressWarnings("serial")
 public class PayPalPaymentProcessor
-    implements APIPaymentProcessor<APITokenDAO, APITokenDAO> {
+    implements APIPaymentProcessor<APIToken, APIToken> {
 
     private static final String URL = "https://api.paypal.com";
 
     private APIConfigInfo configInfo;
-    private volatile APITokenDAO apiTokenDAO;
+    private volatile APIToken apiTokenDAO;
 
     public PayPalPaymentProcessor(APIConfigInfo configInfo) {
         setAPIConfigInfo(configInfo);
@@ -46,7 +46,7 @@ public class PayPalPaymentProcessor
     }
 
     @Override
-    public synchronized APITokenDAO connect() throws APIException {
+    public synchronized APIToken connect() throws APIException {
 
         if (apiTokenDAO == null) {
             apiTokenDAO = newConnection();
@@ -56,7 +56,7 @@ public class PayPalPaymentProcessor
     }
 
     @Override
-    public APITokenDAO newConnection() throws APIException {
+    public APIToken newConnection() throws APIException {
         try {
             return PayPalRestAPI.OAUTH2Token(URL,
                     configInfo.getProperties().getValue((GetName)PayPalPaymentProcessorCreator.Param.API_KEY),
@@ -167,11 +167,11 @@ public class PayPalPaymentProcessor
 
         SUS.checkIfNulls("OrderTransactionDAO is missing.", orderTransactionDAO);
 
-        CreditCardDAO creditCardDAO = orderTransactionDAO.getPaymentInfo().getCreditCard();
-        AddressDAO addressDAO = orderTransactionDAO.getPaymentInfo().getBillingAddress();
+        CreditCardInfo creditCardDAO = orderTransactionDAO.getPaymentInfo().getCreditCard();
+        AddressInfo addressDAO = orderTransactionDAO.getPaymentInfo().getBillingAddress();
 
         // Billing address
-        PPAddressDAO billingAddress = new PPAddressDAO();
+        PPAddress billingAddress = new PPAddress();
         billingAddress.setAddressLine1(addressDAO.getStreet());
         billingAddress.setCity(addressDAO.getCity());
         billingAddress.setState(addressDAO.getStateOrProvince());
@@ -179,7 +179,7 @@ public class PayPalPaymentProcessor
         billingAddress.setCountryCode(addressDAO.getCountry());
 
         // Credit Card
-        PPCreditCardDAO cc = new PPCreditCardDAO();
+        PPCreditCard cc = new PPCreditCard();
         cc.setNumber(creditCardDAO.getCardNumber());
         cc.setType(creditCardDAO.getCardType().getDisplay());
         cc.setExpireMonth(DateUtil.getNormalizedMonth(creditCardDAO.getExpirationDate()));
@@ -190,25 +190,25 @@ public class PayPalPaymentProcessor
         cc.setBillingAddress(billingAddress);
 
         // Amount
-        PPAmountDAO amount = new PPAmountDAO();
+        PPAmount amount = new PPAmount();
         amount.setCurrency(financialTransaction.getAmount().getCurrency().name());
         amount.setTotal(financialTransaction.getAmount().getAmount().toString());
 
         // Transaction
-        PPTransactionDAO transaction = new PPTransactionDAO();
+        PPTransaction transaction = new PPTransaction();
         transaction.setAmount(amount);
 
         // Funding Instrument
-        PPFundingInstrumentDAO fundingInstrument = new PPFundingInstrumentDAO();
+        PPFundingInstrument fundingInstrument = new PPFundingInstrument();
         fundingInstrument.setCreditCard(cc);
 
         // Payer
-        PPPayerDAO payer = new PPPayerDAO();
+        PPPayer payer = new PPPayer();
         payer.setPaymentMethod("credit_card");
         payer.getFundingInstruments().add(fundingInstrument);
 
         // Payment
-        PPPaymentDAO payment = new PPPaymentDAO();
+        PPPayment payment = new PPPayment();
         payment.setIntent("sale");
         payment.setPayer(payer);
         payment.getTransactions().add(transaction);
@@ -250,7 +250,7 @@ public class PayPalPaymentProcessor
         SUS.checkIfNulls("External reference is null.", financialTransaction.getExternalReference());
         SUS.checkIfNulls("Amount is null.", financialTransaction.getAmount());
 
-        PPRefundDAO refund = null;
+        PPRefund refund = null;
 
         try {
             refund = PayPalRestAPI.refund(apiTokenDAO, URL,

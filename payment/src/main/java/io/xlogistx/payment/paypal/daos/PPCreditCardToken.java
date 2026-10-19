@@ -1,11 +1,11 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPCreditCardTokenDAO
-        extends SetNameDescriptionDAO {
+public class PPCreditCardToken
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
@@ -32,19 +32,19 @@ public class PPCreditCardTokenDAO
     public static final NVConfigEntity NVC_PAYPAL_CREDIT_CARD_TOKEN_DAO = new NVConfigEntityPortable(
             "pp_credit_card_token_dao",
             null,
-            "PPCreditCardTokenDAO",
+            "PPCreditCardToken",
             true,
             false,
             false,
             false,
-            PPCreditCardTokenDAO.class,
+            PPCreditCardToken.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPCreditCardTokenDAO() {
+    public PPCreditCardToken() {
         super(NVC_PAYPAL_CREDIT_CARD_TOKEN_DAO);
     }
 

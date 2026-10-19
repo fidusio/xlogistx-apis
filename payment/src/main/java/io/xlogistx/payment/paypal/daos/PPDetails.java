@@ -1,11 +1,11 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 
 @SuppressWarnings("serial")
-public class PPDetailsDAO
-        extends SetNameDescriptionDAO {
+public class PPDetails
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
@@ -32,19 +32,19 @@ public class PPDetailsDAO
     public static final NVConfigEntity NVC_PAYPAL_DETAILS_DAO = new NVConfigEntityPortable(
             "pp_details_dao",
             null,
-            "PPDetailsDAO",
+            "PPDetails",
             true,
             false,
             false,
             false,
-            PPDetailsDAO.class,
+            PPDetails.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPDetailsDAO() {
+    public PPDetails() {
         super(NVC_PAYPAL_DETAILS_DAO);
     }
 

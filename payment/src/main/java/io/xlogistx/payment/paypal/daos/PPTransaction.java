@@ -1,23 +1,23 @@
 package io.xlogistx.payment.paypal.daos;
 
-import org.zoxweb.shared.data.SetNameDescriptionDAO;
+import org.zoxweb.shared.data.SetNameDescriptionImpl;
 import org.zoxweb.shared.util.*;
 import org.zoxweb.shared.util.NVConfigEntity.ArrayType;
 
 @SuppressWarnings("serial")
-public class PPTransactionDAO
-        extends SetNameDescriptionDAO {
+public class PPTransaction
+        extends SetNameDescriptionImpl {
 
     public enum Params
             implements GetNVConfig {
-        AMOUNT(NVConfigManager.createNVConfigEntity("amount", "Amoung being collected.", "Amount", true, true, PPAmountDAO.NVC_PAYPAL_AMOUNT_DAO)),
+        AMOUNT(NVConfigManager.createNVConfigEntity("amount", "Amoung being collected.", "Amount", true, true, PPAmount.NVC_PAYPAL_AMOUNT_DAO)),
         DESCRIPTION(NVConfigManager.createNVConfig("description", "Description of transaction. 127 characters max.", "Description", false, true, String.class)),
-        ITEM_LIST(NVConfigManager.createNVConfigEntity("item_list", "Items and related shipping address within a transaction.", "ItemList", false, true, PPItemListDAO.NVC_PAYPAL_ITEM_LIST_DAO)),
-        RELATED_RESOURCES(NVConfigManager.createNVConfigEntity("related_resources", "Financial transactions related to a payment.", "RelatedResources", false, true, PPComboResourceDAO.NVC_COMBO_RESOURCE_DAO, ArrayType.LIST)),
+        ITEM_LIST(NVConfigManager.createNVConfigEntity("item_list", "Items and related shipping address within a transaction.", "ItemList", false, true, PPItemList.NVC_PAYPAL_ITEM_LIST_DAO)),
+        RELATED_RESOURCES(NVConfigManager.createNVConfigEntity("related_resources", "Financial transactions related to a payment.", "RelatedResources", false, true, PPComboResource.NVC_COMBO_RESOURCE_DAO, ArrayType.LIST)),
         INVOICE_NUMBER(NVConfigManager.createNVConfig("invoice_number", "Invoice number used to track the payment. Only supported when the payment_method is set to paypal. 256 characters max.", "InvoiceNumber", false, true, String.class)),
         CUSTOM(NVConfigManager.createNVConfig("custom", "Free-form field for the use of clients. Only supported when the payment_method is set to paypal. 256 characters max.", "Custom", false, true, String.class)),
         SOFT_DESCRIPTOR(NVConfigManager.createNVConfig("soft_descriptor", "Soft descriptor used when charging this funding source. Only supported when the payment_method is set to paypal. 22 characters max.", "SoftDescriptor", false, true, String.class)),
-        PAYMENT_OPTIONS(NVConfigManager.createNVConfigEntity("payment_options", "Payment options requested for this purchase unit.", "Amount", true, true, PPPaymentOptionsDAO.NVC_PAYPAL_PAYMENT_OPTIONS_DAO)),
+        PAYMENT_OPTIONS(NVConfigManager.createNVConfigEntity("payment_options", "Payment options requested for this purchase unit.", "Amount", true, true, PPPaymentOptions.NVC_PAYPAL_PAYMENT_OPTIONS_DAO)),
 
         ;
 
@@ -35,35 +35,35 @@ public class PPTransactionDAO
     public static final NVConfigEntity NVC_PAYPAL_TRANSACTION_DAO = new NVConfigEntityPortable(
             "pp_transaction_dao",
             null,
-            "PPTransactionDAO",
+            "PPTransaction",
             true,
             false,
             false,
             false,
-            PPTransactionDAO.class,
+            PPTransaction.class,
             SUS.extractNVConfigs(Params.values()),
             null,
             false,
-            SetNameDescriptionDAO.NVC_NAME_DESCRIPTION_DAO
+            SetNameDescriptionImpl.NVC_NAME_DESCRIPTION_IMPL
     );
 
-    public PPTransactionDAO() {
+    public PPTransaction() {
         super(NVC_PAYPAL_TRANSACTION_DAO);
     }
 
-    public PPAmountDAO getAmount() {
+    public PPAmount getAmount() {
         return lookupValue(Params.AMOUNT);
     }
 
-    public void setAmount(PPAmountDAO amount) {
+    public void setAmount(PPAmount amount) {
         setValue(Params.AMOUNT, amount);
     }
 
-    public PPItemListDAO getItemList() {
+    public PPItemList getItemList() {
         return lookupValue(Params.ITEM_LIST);
     }
 
-    public void setItemList(PPItemListDAO list) {
+    public void setItemList(PPItemList list) {
         setValue(Params.ITEM_LIST, list);
     }
 
@@ -110,11 +110,11 @@ public class PPTransactionDAO
         setValue(Params.SOFT_DESCRIPTOR, descriptor);
     }
 
-    public PPPaymentOptionsDAO getPaymentOptions() {
+    public PPPaymentOptions getPaymentOptions() {
         return lookupValue(Params.PAYMENT_OPTIONS);
     }
 
-    public void setPaymentOptions(PPPaymentOptionsDAO options) {
+    public void setPaymentOptions(PPPaymentOptions options) {
         setValue(Params.PAYMENT_OPTIONS, options);
     }
 
