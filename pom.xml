@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <name>xlogistx-apis</name>
-    <url>http://xlogistx.io</url>
+    <url>https://xlogistx.io</url>
     <groupId>io.xlogistx.api</groupId>
     <artifactId>xlogistx-apis</artifactId>
     <version>1.0.0</version>
@@ -35,9 +35,9 @@
             <id>javaconsigliere</id>
             <name>Java Consigliere</name>
             <email>javaconsigliere@gmail.com</email>
-            <url>http://xlogistx.io</url>
+            <url>https://xlogistx.io</url>
             <organization>XlogistX.IO</organization>
-            <organizationUrl>http://xlogistx.io</organizationUrl>
+            <organizationUrl>https://xlogistx.io</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
